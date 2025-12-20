@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <MainButtonDef>
+    <defName>PauseSettlementTab</defName>
+
+    <tabWindowClass>PauseOtherSettlementsSimulation.MainTabWindow_PauseSim</tabWindowClass>
+    <iconPath>UI/Buttons/Pause</iconPath>
+    <order>80</order>
+    <minimized>true</minimized>
+  </MainButtonDef>
+</Defs>

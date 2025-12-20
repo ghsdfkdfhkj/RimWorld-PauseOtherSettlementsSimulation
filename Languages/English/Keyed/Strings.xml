@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <PauseOtherSettlementsSimulation>Pause other settlements simulation</PauseOtherSettlementsSimulation>
+  <PauseOtherSettlements_Tooltip>If enabled, other settlements (non-current map and non-anomaly layers) will be paused. Disabling this will allow all other settlements to simulate.</PauseOtherSettlements_Tooltip>
+  <PauseNewSettlementsByDefault_Label>Pause new settlements by default</PauseNewSettlementsByDefault_Label>
+  <PauseNewSettlementsByDefault_Tooltip>If checked, any newly created settlement will automatically be set to 'paused'.</PauseNewSettlementsByDefault_Tooltip>
+  <PauseNewAnomalyLayersByDefault_Label>Pause new anomaly layers by default</PauseNewAnomalyLayersByDefault_Label>
+  <PauseNewAnomalyLayersByDefault_Tooltip>If checked, newly discovered anomaly layers will be paused by default.</PauseNewAnomalyLayersByDefault_Tooltip>
+  <PauseAnomalyLayersWhenAway_Label>Pause pocket maps when away</PauseAnomalyLayersWhenAway_Label>
+  <PauseAnomalyLayersWhenAway_Tooltip>If checked, pocket maps (anomaly layers) will be automatically paused when you are not viewing their parent settlement.\n*This feature consumes a small amount of ticks.</PauseAnomalyLayersWhenAway_Tooltip>
+
+  <!-- Pause Tab -->
+  <PauseTab_Title>Settlement Simulation Control</PauseTab_Title>
+  <PauseTab_NoSettlements>No player settlements found.</PauseTab_NoSettlements>
+  <PauseTab_SettlementTooltip>Check to pause simulation for this settlement.</PauseTab_SettlementTooltip>
+  <CurrentMap>Current</CurrentMap>
+  <RenameSettlement>Rename settlement</RenameSettlement>
+  <PauseTab_CurrentSettlementEditableTooltip>You can preset the pause state for this settlement. However, the currently viewed map will always be simulated regardless of this setting.</PauseTab_CurrentSettlementEditableTooltip>
+  <PauseTab_AnomalyLayerTooltip>Check to pause simulation for this anomaly layer.</PauseTab_AnomalyLayerTooltip>
+  
+  <!-- Fine-grained control labels -->
+  <FineGrainedControls>Fine-grained controls:</FineGrainedControls>
+  <PauseOngoingJobs_Label>Pause ongoing jobs</PauseOngoingJobs_Label>
+  <PauseOngoingJobs_Tooltip>If enabled, pawns on non-simulated maps will pause their current jobs.</PauseOngoingJobs_Tooltip>
+  <PauseHealth_Label>Pause health simulation</PauseHealth_Label>
+  <PauseHealth_Tooltip>If enabled, health-related processes (like disease progression, immunity gain, and healing) will be paused for pawns on non-simulated maps.</PauseHealth_Tooltip>
+  <PauseWeather_Label>Pause map events &amp; weather</PauseWeather_Label>
+  <PauseWeather_Tooltip>If enabled, map-specific events (like raids, orbital traders) and weather simulation will be paused for non-simulated maps.</PauseWeather_Tooltip>
+  <PauseMentalState_Label>Pause Mental State</PauseMentalState_Label>
+  <PauseMentalState_Tooltip>If enabled, mental breaks, inspirations, and other mood-related events will be paused for pawns in non-active settlements.</PauseMentalState_Tooltip>
+  <PauseAgeing_Label>Pause ageing</PauseAgeing_Label>
+  <PauseAgeing_Tooltip>If enabled, pawns on non-visible maps will not get older.</PauseAgeing_Tooltip>
+</LanguageData>

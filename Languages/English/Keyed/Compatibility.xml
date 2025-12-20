@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- Compatibility Section -->
+  <Compatibility_Label>Compatibility</Compatibility_Label>
+  <EnableVehicleFrameworkPatch_Label>Enable Vehicle Framework Patch</EnableVehicleFrameworkPatch_Label>
+  <EnableVehicleFrameworkPatch_Tooltip>If enabled, this mod will patch Vehicle Framework to pause vehicles on non-active maps. Requires RimWorld restart to take effect.</EnableVehicleFrameworkPatch_Tooltip>
+</LanguageData>

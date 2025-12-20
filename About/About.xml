@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+    <name>Pause other settlements simulation</name>
+    <author>esvn</author>
+    <url></url>
+    <supportedVersions>
+        <li>1.6</li>
+    </supportedVersions>
+    <packageId>esvn.PauseOtherSettlementsSimulation</packageId>
+    <description>
+        A mod that pauses simulation for invisible settlements while time flows normally, allowing simulation to continue on other layers of the same settlement, similar to the Anomaly DLC.
+    </description>
+</ModMetaData> 

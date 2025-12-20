@@ -1,0 +1,5 @@
+/_api
+/obj
+/Assemblies
+**/obj/
+**/bin/

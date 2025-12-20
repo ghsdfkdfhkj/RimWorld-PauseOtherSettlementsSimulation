@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- Compatibility Section -->
+  <Compatibility_Label>호환성</Compatibility_Label>
+  <EnableVehicleFrameworkPatch_Label>Vehicle Framework 패치 활성화</EnableVehicleFrameworkPatch_Label>
+  <EnableVehicleFrameworkPatch_Tooltip>활성화하면, 이 모드가 Vehicle Framework를 패치하여 비활성 맵의 차량 시뮬레이션을 중지시킵니다. 설정을 적용하려면 림월드를 재시작해야 합니다.</EnableVehicleFrameworkPatch_Tooltip>
+</LanguageData>
