@@ -75,7 +75,8 @@ namespace PauseOtherSettlementsSimulation
                     Settings.knownSettlements.Add(newInfo);
                     if (!worldComp.settlementPausedStates.ContainsKey(tile))
                     {
-                        worldComp.settlementPausedStates[tile] = Settings.pauseNewSettlementsByDefault;
+                        // Default to running (false). Auto-pause will catch it if needed.
+                        worldComp.settlementPausedStates[tile] = false;
                     }
                 }
             }
@@ -96,24 +97,24 @@ namespace PauseOtherSettlementsSimulation
                 }
                 else
                 {
-                    isPaused = Settings.pauseNewAnomalyLayersByDefault;
+                    isPaused = false;
                 }
             }
             else if (map.Parent is Settlement settlement)
             {
-                isPaused = worldComp.settlementPausedStates.TryGetValue(settlement.Tile, out bool pausedState) ? pausedState : Settings.pauseNewSettlementsByDefault;
+                isPaused = worldComp.settlementPausedStates.TryGetValue(settlement.Tile, out bool pausedState) ? pausedState : false;
             }
             // Add support for generic MapParents that are player-owned (Camps, etc.)
             else if (map.Parent is MapParent mapParent && mapParent.Faction == Faction.OfPlayer)
             {
-                 isPaused = worldComp.settlementPausedStates.TryGetValue(mapParent.Tile, out bool pausedState) ? pausedState : Settings.pauseNewSettlementsByDefault;
+                 isPaused = worldComp.settlementPausedStates.TryGetValue(mapParent.Tile, out bool pausedState) ? pausedState : false;
             }
 			else
 			{
 				// 기타 맵(우주/특수 맵 등)은 map.uniqueID 기준으로 제어
 				isPaused = worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out bool pausedState)
 					? pausedState
-					: Settings.pauseNewAnomalyLayersByDefault;
+					: false;
 			}
 			return !isPaused;
         }
@@ -169,7 +170,7 @@ namespace PauseOtherSettlementsSimulation
 			public static void SetSettlementPaused(int tileId, bool paused)
 			{
 				var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
-				bool old = worldComp.settlementPausedStates.TryGetValue(tileId, out var prev) ? prev : Settings.pauseNewSettlementsByDefault;
+				bool old = worldComp.settlementPausedStates.TryGetValue(tileId, out var prev) ? prev : false;
 				if (old == paused) return;
 				worldComp.settlementPausedStates[tileId] = paused;
 				var settlement = Find.World.worldObjects.SettlementAt(tileId);
@@ -182,7 +183,7 @@ namespace PauseOtherSettlementsSimulation
 			public static void SetAnomalyMapPaused(int mapUniqueId, bool paused)
 			{
 				var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
-				bool old = worldComp.anomalyMapPausedStates.TryGetValue(mapUniqueId, out var prev) ? prev : Settings.pauseNewAnomalyLayersByDefault;
+				bool old = worldComp.anomalyMapPausedStates.TryGetValue(mapUniqueId, out var prev) ? prev : false;
 				if (old == paused) return;
 				worldComp.anomalyMapPausedStates[mapUniqueId] = paused;
 				var map = Find.Maps.FirstOrDefault(m => m.uniqueID == mapUniqueId);

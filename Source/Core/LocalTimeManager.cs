@@ -8,6 +8,9 @@ namespace PauseOtherSettlementsSimulation
     {
         public static int GetLocalTicks(Map map)
         {
+            var settings = LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().GetSettings<PauseOtherSettlementsSimulationSettings>();
+            if (!settings.enableLocalTimeSystem) return Find.TickManager.TicksGame;
+
             if (map == null) return Find.TickManager.TicksGame;
 
             var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();

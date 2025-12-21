@@ -30,33 +30,58 @@ namespace PauseOtherSettlementsSimulation
 
     public class PauseOtherSettlementsSimulationSettings : ModSettings
     {
-        public bool pauseNewAnomalyLayersByDefault = false; // New setting, default off
+        // Core settings
         public bool PauseOtherSettlements = true;
         public bool PauseOngoingJobs = true;
         public bool PauseHealth = true;
         public bool PauseWeather = true;
         public bool PauseMentalState = true;
         public bool PauseAgeing = true;
-        public bool pauseNewSettlementsByDefault = true; // New Setting
-        public bool pauseAnomalyLayersWhenAway = true; // New setting
         public bool enableVehicleFrameworkPatch = true; // VF Patch Toggle
-        public Dictionary<int, bool> settlementExpandedStates = new Dictionary<int, bool>(); // For accordion UI state
+
+        // New/Renamed settings
+        public bool autoPausePocketMaps = true; // Renamed from pauseAnomalyLayersWhenAway
+        public bool autoPauseSettlements = true; // New (Default: True)
+        public bool enableLocalTimeSystem = true; // New: Controls Local Time feature & UI
+
+        // Dictionary to store expanded states of settlements in the UI
+        public Dictionary<int, bool> settlementExpandedStates = new Dictionary<int, bool>();
+
+        // Language override setting
+        public string manualLanguageOverride = "Auto"; 
         public List<SettlementInfo> knownSettlements = new List<SettlementInfo>();
 
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Values.Look(ref pauseNewAnomalyLayersByDefault, "pauseNewAnomalyLayersByDefault", false);
             Scribe_Values.Look(ref PauseOtherSettlements, "pauseOtherSettlements", true);
             Scribe_Values.Look(ref PauseOngoingJobs, "pauseOngoingJobs", true);
             Scribe_Values.Look(ref PauseHealth, "pauseHealth", true);
             Scribe_Values.Look(ref PauseWeather, "pauseWeather", true);
             Scribe_Values.Look(ref PauseMentalState, "pauseMentalState", true);
             Scribe_Values.Look(ref PauseAgeing, "pauseAgeing", true);
-            Scribe_Values.Look(ref pauseNewSettlementsByDefault, "pauseNewSettlementsByDefault", true); // New Setting
-            Scribe_Values.Look(ref pauseAnomalyLayersWhenAway, "pauseAnomalyLayersWhenAway", true); // New setting
             Scribe_Values.Look(ref enableVehicleFrameworkPatch, "enableVehicleFrameworkPatch", true);
+            
+            // Try to load with new name, fallback to old name if needed (optional, but good practice)
+            Scribe_Values.Look(ref autoPausePocketMaps, "autoPausePocketMaps", true);
+            if (Scribe.mode == LoadSaveMode.LoadingVars && !autoPausePocketMaps)
+            {
+                // Attempt legacy load
+                bool legacyVal = true;
+                Scribe_Values.Look(ref legacyVal, "pauseAnomalyLayersWhenAway", true);
+                if (!legacyVal) autoPausePocketMaps = false; // Sync if old value was false
+            }
+
+            Scribe_Values.Look(ref autoPauseSettlements, "autoPauseSettlements", true);
+            Scribe_Values.Look(ref enableLocalTimeSystem, "enableLocalTimeSystem", true);
+
+            Scribe_Values.Look(ref manualLanguageOverride, "manualLanguageOverride", "Auto");
+            
             Scribe_Collections.Look(ref settlementExpandedStates, "settlementExpandedStates", LookMode.Value, LookMode.Value);
+            if (settlementExpandedStates == null)
+            {
+                settlementExpandedStates = new Dictionary<int, bool>();
+            }
             Scribe_Collections.Look(ref knownSettlements, "knownSettlements", LookMode.Deep);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
@@ -70,9 +95,26 @@ namespace PauseOtherSettlementsSimulation
         {
             Listing_Standard listingStandard = new Listing_Standard();
             listingStandard.Begin(inRect);
+            
+            // Global Enable
             listingStandard.CheckboxLabeled("PauseOtherSettlementsSimulation".Translate(), ref PauseOtherSettlements, "PauseOtherSettlements_Tooltip".Translate());
-            listingStandard.CheckboxLabeled("PauseNewSettlementsByDefault_Label".Translate(), ref pauseNewSettlementsByDefault, "PauseNewSettlementsByDefault_Tooltip".Translate());
-            listingStandard.CheckboxLabeled("PauseNewAnomalyLayersByDefault_Label".Translate(), ref pauseNewAnomalyLayersByDefault, "PauseNewAnomalyLayersByDefault_Tooltip".Translate());
+            listingStandard.GapLine();
+
+            // Local Time System
+            listingStandard.CheckboxLabeled("PauseTab_EnableLocalTimeSystem".Translate(), ref enableLocalTimeSystem, "PauseTab_EnableLocalTimeSystemTooltip".Translate());
+            listingStandard.Gap();
+
+            // Auto-Pause Settings
+            listingStandard.CheckboxLabeled("PauseTab_AutoPauseSettlements".Translate(), ref autoPauseSettlements, "PauseTab_AutoPauseSettlementsTooltip".Translate());
+            
+            if (autoPauseSettlements)
+            {
+                listingStandard.Gap(2f);
+                listingStandard.Indent(24f); 
+                listingStandard.CheckboxLabeled("PauseTab_AutoPausePocketMaps".Translate(), ref autoPausePocketMaps, "PauseTab_AutoPausePocketMapsTooltip".Translate());
+                listingStandard.Outdent(24f);
+            }
+            
             listingStandard.GapLine();
             listingStandard.Label("FineGrainedControls".Translate());
             listingStandard.CheckboxLabeled("PauseOngoingJobs_Label".Translate(), ref PauseOngoingJobs, "PauseOngoingJobs_Tooltip".Translate());

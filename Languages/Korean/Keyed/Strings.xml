@@ -2,12 +2,18 @@
 <LanguageData>
   <PauseOtherSettlementsSimulation>다른 정착지 시뮬레이션 일시 정지</PauseOtherSettlementsSimulation>
   <PauseOtherSettlements_Tooltip>활성화된 경우, 현재 지도 및 anomaly 레이어가 아닌 다른 정착지들은 일시 정지됩니다. 이 옵션을 비활성화하면 모든 다른 정착지가 시뮬레이션됩니다.</PauseOtherSettlements_Tooltip>
-  <PauseNewSettlementsByDefault_Label>새 정착지를 기본으로 일시정지</PauseNewSettlementsByDefault_Label>
-  <PauseNewSettlementsByDefault_Tooltip>체크하면, 새로 생성된 모든 정착지가 자동으로 '일시정지' 상태로 설정됩니다.</PauseNewSettlementsByDefault_Tooltip>
-  <PauseNewAnomalyLayersByDefault_Label>새 anomaly 레이어를 기본으로 일시정지</PauseNewAnomalyLayersByDefault_Label>
-  <PauseNewAnomalyLayersByDefault_Tooltip>체크하면, 새로 생성된 anomaly 레이어가 자동으로 '일시정지' 상태로 설정합니다.</PauseNewAnomalyLayersByDefault_Tooltip>
-  <PauseAnomalyLayersWhenAway_Label>보지않는 소형 지역 일시정지</PauseAnomalyLayersWhenAway_Label>
-  <PauseAnomalyLayersWhenAway_Tooltip>체크하면, 해당 소형 지역 (anomaly 레이어)가 있는 정착지를 보고 있지 않을 때 자동으로 일시정지됩니다.</PauseAnomalyLayersWhenAway_Tooltip>
+  <PauseTab_PauseNewSettlementsByDefault>새 정착지를 기본으로 일시정지</PauseTab_PauseNewSettlementsByDefault>
+  <PauseTab_PauseNewSettlementsDefaultsTooltip>체크하면, 새로 생성된 모든 정착지가 자동으로 '일시정지' 상태로 설정됩니다.</PauseTab_PauseNewSettlementsDefaultsTooltip>
+  <PauseTab_PauseNewAnomalyLayersByDefault>새 소형 지역을 기본으로 일시정지</PauseTab_PauseNewAnomalyLayersByDefault>
+  <PauseTab_PauseNewAnomalyLayersDefaultsTooltip>체크하면, 새로 생성된 소형 지역이 자동으로 '일시정지' 상태로 설정됩니다.</PauseTab_PauseNewAnomalyLayersDefaultsTooltip>
+  
+  <PauseTab_AutoPausePocketMaps>보지않는 소형 지역 자동 일시정지</PauseTab_AutoPausePocketMaps>
+  <PauseTab_AutoPausePocketMapsTooltip>체크하면, 해당 소형 지역 (무덤, 채굴 캠프 등)을 보고 있지 않을 때 자동으로 일시정지됩니다.</PauseTab_AutoPausePocketMapsTooltip>
+  <PauseTab_AutoPauseSettlements>보지않는 정착지 자동 일시정지</PauseTab_AutoPauseSettlements>
+  <PauseTab_AutoPauseSettlementsTooltip>체크하면, 일반 정착지를 보고 있지 않을 때 자동으로 일시정지됩니다.</PauseTab_AutoPauseSettlementsTooltip>
+
+  <PauseTab_EnableLocalTimeSystem>로컬 타임 시뮬레이션 사용</PauseTab_EnableLocalTimeSystem>
+  <PauseTab_EnableLocalTimeSystemTooltip>활성화하면 각 정착지의 시간이 독립적으로 흐르게 됩니다. 비활성화하면 바닐라처럼 모든 정착지가 글로벌 시간을 공유합니다.</PauseTab_EnableLocalTimeSystemTooltip>
 
   <!-- 일시정지 탭 -->
   <PauseTab_Title>정착지 시뮬레이션 제어</PauseTab_Title>

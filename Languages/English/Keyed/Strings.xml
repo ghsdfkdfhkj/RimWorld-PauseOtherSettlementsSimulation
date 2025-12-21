@@ -2,12 +2,18 @@
 <LanguageData>
   <PauseOtherSettlementsSimulation>Pause other settlements simulation</PauseOtherSettlementsSimulation>
   <PauseOtherSettlements_Tooltip>If enabled, other settlements (non-current map and non-anomaly layers) will be paused. Disabling this will allow all other settlements to simulate.</PauseOtherSettlements_Tooltip>
-  <PauseNewSettlementsByDefault_Label>Pause new settlements by default</PauseNewSettlementsByDefault_Label>
-  <PauseNewSettlementsByDefault_Tooltip>If checked, any newly created settlement will automatically be set to 'paused'.</PauseNewSettlementsByDefault_Tooltip>
-  <PauseNewAnomalyLayersByDefault_Label>Pause new anomaly layers by default</PauseNewAnomalyLayersByDefault_Label>
-  <PauseNewAnomalyLayersByDefault_Tooltip>If checked, newly discovered anomaly layers will be paused by default.</PauseNewAnomalyLayersByDefault_Tooltip>
-  <PauseAnomalyLayersWhenAway_Label>Pause pocket maps when away</PauseAnomalyLayersWhenAway_Label>
-  <PauseAnomalyLayersWhenAway_Tooltip>If checked, pocket maps (anomaly layers) will be automatically paused when you are not viewing their parent settlement.</PauseAnomalyLayersWhenAway_Tooltip>
+  <PauseTab_PauseNewSettlementsByDefault>Pause new settlements by default</PauseTab_PauseNewSettlementsByDefault>
+  <PauseTab_PauseNewSettlementsDefaultsTooltip>If checked, any newly created settlement will automatically be set to 'paused'.</PauseTab_PauseNewSettlementsDefaultsTooltip>
+  <PauseTab_PauseNewAnomalyLayersByDefault>Pause new pocket maps by default</PauseTab_PauseNewAnomalyLayersByDefault>
+  <PauseTab_PauseNewAnomalyLayersDefaultsTooltip>If checked, newly discovered pocket maps (anomaly layers) will be paused by default.</PauseTab_PauseNewAnomalyLayersDefaultsTooltip>
+  
+  <PauseTab_AutoPausePocketMaps>Auto-pause unseen pocket maps</PauseTab_AutoPausePocketMaps>
+  <PauseTab_AutoPausePocketMapsTooltip>If checked, pocket maps (e.g., pit gates, mining camps) will be automatically paused when you are not currently viewing them.</PauseTab_AutoPausePocketMapsTooltip>
+  <PauseTab_AutoPauseSettlements>Auto-pause unseen settlements</PauseTab_AutoPauseSettlements>
+  <PauseTab_AutoPauseSettlementsTooltip>If checked, regular settlements will be automatically paused when you are not currently viewing them.</PauseTab_AutoPauseSettlementsTooltip>
+
+  <PauseTab_EnableLocalTimeSystem>Enable Local Time Simulation</PauseTab_EnableLocalTimeSystem>
+  <PauseTab_EnableLocalTimeSystemTooltip>If enabled, each settlement will have its own independent time flow (freezing when paused). Disabling this reverts to Vanilla behavior where all settlements share Global Time.</PauseTab_EnableLocalTimeSystemTooltip>
 
   <!-- Pause Tab -->
   <PauseTab_Title>Settlement Simulation Control</PauseTab_Title>

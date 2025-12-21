@@ -85,46 +85,78 @@ namespace PauseOtherSettlementsSimulation
 
             if (Find.TickManager.TicksGame % 60 != 0) return;
 
-            if (!PauseOtherSettlementsSimulation.Settings.pauseAnomalyLayersWhenAway) return;
+            var settings = LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().GetSettings<PauseOtherSettlementsSimulationSettings>();
+            if (settings == null) return;
 
-            // 모든 변칙 레이어를 순회합니다.
             foreach (var map in Find.Maps)
             {
+                if (!map.IsPlayerHome && map.Parent.Faction != Faction.OfPlayer) continue;
+
+                // Determine if this map is subject to auto-pause
+                bool isTargetForAutoPause = false;
+                bool isAway = (Find.CurrentMap != map);
+
                 if (map.Parent is PocketMapParent pocketMapParent)
                 {
-                    // 변칙 레이어의 부모 정착지를 찾습니다.
-                    Map sourceMap = pocketMapParent.sourceMap;
-                    Settlement parentSettlement = sourceMap?.Parent as Settlement;
-
-                    // 부모 정착지가 없거나 플레이어의 소유가 아니면 건너뜁니다.
-                    if (parentSettlement == null || parentSettlement.Faction != Faction.OfPlayer)
+                    // User Request: "Auto-pause pocket maps is a sub-setting of auto-pause settlements"
+                    // So we only check pocket maps if settings.autoPauseSettlements is TRUE.
+                    if (settings.autoPauseSettlements && settings.autoPausePocketMaps)
                     {
-                        // 부모를 찾을 수 없는 경우, 플레이어가 맵 내부에 있을 때만 시뮬레이션합니다.
-                        anomalyMapPausedStates[map.uniqueID] = Find.CurrentMap != map;
-                        continue;
+                        isTargetForAutoPause = true;
+                        // Special rule: If player is in the source map (parent settlement), we are not "away" effectively.
+                        // "Together" means: Parent Active <-> Child Active.
+                        if (pocketMapParent.sourceMap != null && Find.CurrentMap == pocketMapParent.sourceMap)
+                        {
+                            isAway = false;
+                        }
                     }
+                }
+                else if (map.Parent is Settlement || map.Parent is MapParent) // Generic catch-all for other player maps (SOS2 ships etc)
+                {
+                     if (settings.autoPauseSettlements)
+                     {
+                         isTargetForAutoPause = true;
+                         
+                         // Check if we are currently viewing a child Pocket Map of this settlement.
+                         // If so, we are effectively "at" the settlement (Synced behavior).
+                         if (isAway) // Only check if we are physically away from the settlement itself
+                         {
+                             // Iterate maps to find if current map is a child of 'map'
+                             Map current = Find.CurrentMap;
+                             if (current != null && current.Parent is PocketMapParent pmp && pmp.sourceMap == map)
+                             {
+                                 isAway = false;
+                             }
+                         }
+                     }
+                }
 
-                    bool isAway = true; // 기본적으로 자리를 비운 것으로 가정합니다.
-
-                    // Case 1: 플레이어가 변칙 레이어 맵 자체를 보고 있는 경우
-                    if (Find.CurrentMap == map)
-                    {
-                        isAway = false;
-                    }
-                    // Case 2: 플레이어가 부모 정착지를 보고 있는 경우
-                    else if (Find.CurrentMap?.Tile == parentSettlement.Tile)
-                    {
-                        isAway = false;
-                    }
+                if (isTargetForAutoPause)
+                {
+                    bool currentState = false;
+                    bool isPocket = map.Parent is PocketMapParent;
                     
-                    bool oldState = false;
-                    if (anomalyMapPausedStates.TryGetValue(map.uniqueID, out bool val)) oldState = val;
-                    
-                    if (oldState != isAway)
+                    if (isPocket)
                     {
-                         anomalyMapPausedStates[map.uniqueID] = isAway;
-                         // Also trigger state application immediately for this map
-                         PauseOtherSettlementsSimulation.ApplyMapPauseState(map, isAway);
+                         if (anomalyMapPausedStates.TryGetValue(map.uniqueID, out bool val)) currentState = val;
+                    }
+                    else
+                    {
+                         if (settlementPausedStates.TryGetValue(map.Tile, out bool val)) currentState = val;
+                    }
+
+                    // Only update if different.
+                    // If isAway is TRUE, we want to Pause (true).
+                    // If isAway is FALSE, we want to Unpause (false) -> OR do we?
+                    // Auto-Pause usually implies "Auto-Resume" when you return.
+                    // So yes, we enforce 'isAway' as the pause state.
+
+                    if (currentState != isAway)
+                    {
+                        if (isPocket) anomalyMapPausedStates[map.uniqueID] = isAway;
+                        else settlementPausedStates[map.Tile] = isAway;
+
+                        PauseOtherSettlementsSimulation.ApplyMapPauseState(map, isAway);
                     }
                 }
             }

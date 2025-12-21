@@ -20,6 +20,13 @@ namespace PauseOtherSettlementsSimulation
             LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().WriteSettings();
         }
 
+        // Textures
+        private static Texture2D _playIcon;
+        private static Texture2D PlayIcon => _playIcon ?? (_playIcon = ContentFinder<Texture2D>.Get("UI/TimeControls/TimeSpeedButton_Normal"));
+        
+        private static Texture2D _pauseIcon;
+        private static Texture2D PauseIcon => _pauseIcon ?? (_pauseIcon = ContentFinder<Texture2D>.Get("UI/TimeControls/TimeSpeedButton_Pause"));
+
         public override void DoWindowContents(Rect inRect)
         {
             // Use direct query as requested to ensure all map parents (including space, camps) are captured.
@@ -66,24 +73,14 @@ namespace PauseOtherSettlementsSimulation
             Listing_Standard mainListing = new Listing_Standard();
             mainListing.Begin(inRect);
 
-            // --- 제목과 체크박스를 한 줄에 표시하기 위한 수동 레이아웃 ---
+            // --- 제목 라벨 ---
             Rect headerRect = mainListing.GetRect(32f); 
             Text.Font = GameFont.Medium;
-            
-            // 제목 라벨 그리기
             Vector2 titleSize = Text.CalcSize("PauseTab_Title".Translate());
             Rect titleRect = new Rect(headerRect.x, headerRect.y, titleSize.x, titleSize.y);
             Widgets.Label(titleRect, "PauseTab_Title".Translate());
-
-            // 체크박스 그리기
             Text.Font = GameFont.Small; 
-            Vector2 checkboxLabelSize = Text.CalcSize("PauseAnomalyLayersWhenAway_Label".Translate());
-            float checkboxTotalWidth = checkboxLabelSize.x + 24f + 4f; 
-            Rect checkboxRect = new Rect(headerRect.xMax - checkboxTotalWidth, headerRect.y, checkboxTotalWidth, titleRect.height);
             
-            Widgets.CheckboxLabeled(checkboxRect, "PauseAnomalyLayersWhenAway_Label".Translate(), ref settings.pauseAnomalyLayersWhenAway);
-            TooltipHandler.TipRegion(checkboxRect, "PauseAnomalyLayersWhenAway_Tooltip".Translate());
-
             mainListing.GapLine();
             // --- 수동 레이아웃 끝 ---
 
@@ -180,7 +177,7 @@ namespace PauseOtherSettlementsSimulation
             Widgets.DrawHighlightIfMouseover(rowRect);
             GUI.BeginGroup(rowRect);
 
-            const float iconWidth = 24f, checkboxWidth = 24f, expanderWidth = 24f, spacing = 8f;
+            const float iconWidth = 24f, checkboxWidth = 24f, expanderWidth = 24f, statusWidth = 24f, spacing = 8f;
             const float timeColumnWidth = 140f;
             const float offsetColumnWidth = 80f;
 
@@ -196,10 +193,19 @@ namespace PauseOtherSettlementsSimulation
             Rect expanderRect = new Rect(currentX, 0, hasChildren ? expanderWidth : 0, rowRect.height);
             currentX += expanderRect.width + (hasChildren ? spacing : 0);
 
+            Rect statusRect = new Rect(currentX, 0, statusWidth, rowRect.height);
+            currentX += statusWidth + spacing;
+
             float rightSideWidth = checkboxWidth + (spacing * 1);
             
             float centerAvailableWidth = rowRect.width - currentX - rightSideWidth;
-            float availableForLabelRename = centerAvailableWidth - timeColumnWidth - offsetColumnWidth - (spacing * 2);
+            float availableForLabelRename = centerAvailableWidth;
+
+            if (settings.enableLocalTimeSystem)
+            {
+                availableForLabelRename -= (timeColumnWidth + offsetColumnWidth + (spacing * 2));
+            }
+
             float labelRenameWidth = availableForLabelRename - iconWidth - spacing;
             
             Rect labelRect = new Rect(currentX, 0, labelRenameWidth, rowRect.height);
@@ -208,11 +214,17 @@ namespace PauseOtherSettlementsSimulation
             Rect renameRect = new Rect(currentX, 0, iconWidth, rowRect.height);
             currentX += iconWidth + spacing;
 
-            Rect timeRect = new Rect(currentX, 0, timeColumnWidth, rowRect.height);
-            currentX += timeColumnWidth + spacing;
+            Rect timeRect = default;
+            Rect offsetRect = default;
 
-            Rect offsetRect = new Rect(currentX, 0, offsetColumnWidth, rowRect.height);
-            currentX += offsetColumnWidth + spacing;
+            if (settings.enableLocalTimeSystem)
+            {
+                timeRect = new Rect(currentX, 0, timeColumnWidth, rowRect.height);
+                currentX += timeColumnWidth + spacing;
+
+                offsetRect = new Rect(currentX, 0, offsetColumnWidth, rowRect.height);
+                currentX += offsetColumnWidth + spacing;
+            }
 
             Rect checkboxRect = new Rect(currentX, 0, checkboxWidth, rowRect.height);
 
@@ -229,7 +241,52 @@ namespace PauseOtherSettlementsSimulation
                 GUI.matrix = matrix;
             }
 
-            // 2. Label
+            // 5. Checkbox (Pre-calculate for status)
+            var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
+            bool isPaused;
+            if (isParentSettlement)
+            {
+                isPaused = worldComp.settlementPausedStates.TryGetValue(tileId, out var ps) ? ps : false;
+            }
+            else
+            {
+                if (map != null)
+                {
+                    if (worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out var aps)) isPaused = aps;
+                    else isPaused = false;
+                }
+                else isPaused = false; // Fallback
+            }
+
+            // 2. Status Icon (Time Flowing)
+            // If Paused -> Pause Icon. If Running -> Play Icon.
+            // But wait, if enableLocalTimeSystem is OFF, then everything is Running (Global Time)?
+            // Or does the pause setting still work for filtering ticks?
+            // The logic in TimePatches filters based on IsMapPaused.
+            // If enableLocalTimeSystem is OFF, we might still want to PAUSE the map simulation for performance?
+            // The prompt implied "Local Time Simulation" toggles feature AND UI.
+            // If feature is OFF, then map shouldn't pause?
+            // "disable logic" in LocalTimeManager was just for the Time Reading.
+            // I should explicitly check enableLocalTimeSystem for the Icon too.
+            // If system OFF: Always Play? Or Hide Icon?
+            // Let's fallback to Play icon if system OFF.
+            
+            if (settings.enableLocalTimeSystem)
+            {
+                Texture2D statusIcon = isPaused ? PauseIcon : PlayIcon;
+                // If PlayIcon is null (fallback), use Reveal
+                if (statusIcon == null) statusIcon = TexButton.Reveal;
+                
+                // Colorize?
+                // Paused -> Yellow/Red? Play -> Green?
+                // Vanilla speed buttons use highlighting.
+                // Let's just draw the texture.
+                
+                // Centered icon
+                GUI.DrawTexture(new Rect(statusRect.x + (statusRect.width-24f)/2, statusRect.y + (statusRect.height-24f)/2, 24f, 24f), statusIcon);
+            }
+
+            // 3. Label
             string labelText = label;
             if (isCurrentMap) labelText = $"{labelText} ({"CurrentMap".Translate()})";
 
@@ -245,7 +302,7 @@ namespace PauseOtherSettlementsSimulation
                 Widgets.Label(labelRect, labelText);
             }
 
-            // 3. Rename Button
+            // 4. Rename Button
             if (Widgets.ButtonImage(renameRect, TexButton.Rename))
             {
                 if (isParentSettlement && parent is Settlement s)
@@ -256,23 +313,15 @@ namespace PauseOtherSettlementsSimulation
                 {
                     Find.WindowStack.Add(new Dialog_RenameAnomalyLayerCustom(map));
                 }
-                else if (isParentSettlement)
-                {
-                    // Generic MapParent rename support if needed, or disable. 
-                    // Currently Dialog_RenameSettlementCustom takes 'Settlement'.
-                    // If it's a generic MapParent (like Ship), we might not support renaming or need a generic dialog.
-                    // For now, suppress if not Settlement to avoid crash. (Space ships usually rename via their own UI).
-                }
             }
             TooltipHandler.TipRegion(renameRect, "RenameSettlement".Translate());
 
-            // 4. Time & Offset Columns
-            // Use passed map, or derive from parent
+            // 4. Time & Offset Columns (Conditional)
             Map targetMap = map ?? parent?.Map;
             
-            if (targetMap != null)
+            if (settings.enableLocalTimeSystem && targetMap != null)
             {
-                // Local Time
+                 // Local Time
                 long localTicks = LocalTimeManager.GetLocalTicksAbs(targetMap);
                 
                 Vector2 longLat = Vector2.zero;
@@ -312,27 +361,12 @@ namespace PauseOtherSettlementsSimulation
             }
 
 
-            // 5. Checkbox
-            var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
-            bool isPaused;
-            if (isParentSettlement)
-            {
-                // Use tileId (which is settlement.Tile) for top-level pause state
-                isPaused = worldComp.settlementPausedStates.TryGetValue(tileId, out var ps) ? ps : settings.pauseNewSettlementsByDefault;
-            }
-            else
-            {
-                // Use map.uniqueID for child maps
-                if (worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out var aps)) isPaused = aps;
-                else isPaused = settings.pauseNewAnomalyLayersByDefault;
-            }
+            // 6. Checkbox
             bool tempIsPaused = isPaused;
             Widgets.Checkbox(checkboxRect.position, ref tempIsPaused);
             if (tempIsPaused != isPaused)
             {
                 if (isParentSettlement) PauseOtherSettlementsSimulation.SetSettlementPaused(tileId, tempIsPaused);
-                // Note: If SOS2 ship shares Tile -1, this will pause ALL ships sharing Tile -1.
-                // This is a known potential limitation but consistent with current "SetSettlementPaused" logic.
                 else PauseOtherSettlementsSimulation.SetAnomalyMapPaused(map.uniqueID, tempIsPaused);
             }
             
