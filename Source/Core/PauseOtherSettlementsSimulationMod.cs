@@ -46,24 +46,18 @@ namespace PauseOtherSettlementsSimulation
             var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
 
             // Get all current player settlements from the world (surface)
-            var currentPlayerSettlements = Find.World.worldObjects.Settlements
-                .Where(s => s.Faction == Faction.OfPlayer)
-                .ToDictionary(s => s.Tile, s => s.Name);
-
-            // Include Odyssey off-world homes (e.g., SpaceMapParent) owned by player
-            foreach (var spaceParent in Find.World.worldObjects.AllWorldObjects.OfType<SpaceMapParent>())
-            {
-                if (spaceParent.Faction == Faction.OfPlayer)
-                {
-                    currentPlayerSettlements[spaceParent.Tile] = spaceParent.Label;
-                }
-            }
+            // Get all current player owned map parents (Settlements, Camps, Space Stations, etc.)
+            // We only care about things that have a map (or are generating one) and belong to the player.
+            // Some mods might use MapParent for camps without them being "Settlement" class.
+            var currentPlayerMapParents = Find.World.worldObjects.AllWorldObjects.OfType<MapParent>()
+                .Where(mp => mp.Faction == Faction.OfPlayer && mp.HasMap)
+                .ToDictionary(mp => mp.Tile, mp => mp.Label);
 
             // Remove settlements from our list that no longer exist in the world
-            Settings.knownSettlements.RemoveAll(s => !currentPlayerSettlements.ContainsKey(s.tile));
+            Settings.knownSettlements.RemoveAll(s => !currentPlayerMapParents.ContainsKey(s.tile));
 
             // Update names for existing entries and add new ones (surface + off-world)
-            foreach (var kv in currentPlayerSettlements)
+            foreach (var kv in currentPlayerMapParents)
             {
                 int tile = kv.Key;
                 string name = kv.Value;
@@ -108,6 +102,11 @@ namespace PauseOtherSettlementsSimulation
             else if (map.Parent is Settlement settlement)
             {
                 isPaused = worldComp.settlementPausedStates.TryGetValue(settlement.Tile, out bool pausedState) ? pausedState : Settings.pauseNewSettlementsByDefault;
+            }
+            // Add support for generic MapParents that are player-owned (Camps, etc.)
+            else if (map.Parent is MapParent mapParent && mapParent.Faction == Faction.OfPlayer)
+            {
+                 isPaused = worldComp.settlementPausedStates.TryGetValue(mapParent.Tile, out bool pausedState) ? pausedState : Settings.pauseNewSettlementsByDefault;
             }
 			else
 			{
@@ -346,10 +345,22 @@ namespace PauseOtherSettlementsSimulation
     [HarmonyPatch(typeof(Pawn_TrainingTracker), "TrainingTrackerTickRare")]
     public static class Pawn_TrainingTracker_TrainingTrackerTickRare_Patch
     {
+        private static FieldInfo countDecayFromField = AccessTools.Field(typeof(Pawn_TrainingTracker), "countDecayFrom");
+
         [HarmonyPrefix]
-        public static bool Prefix(Pawn ___pawn)
+        public static bool Prefix(Pawn_TrainingTracker __instance, Pawn ___pawn)
         {
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map);
+            if (PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map)) return true;
+
+            // 맵이 정지된 동안에는 훈련 감퇴 타이머만 흐르게 하여(250틱 추가),
+            // 나중에 맵이 다시 로드되었을 때 급격한 감퇴가 일어나지 않도록 보호합니다.
+            // 이는 Suspended 상태일 때의 로직과 동일합니다.
+            if (countDecayFromField != null)
+            {
+                int current = (int)countDecayFromField.GetValue(__instance);
+                countDecayFromField.SetValue(__instance, current + 250);
+            }
+            return false;
         }
     }
 
@@ -482,6 +493,28 @@ namespace PauseOtherSettlementsSimulation
 
             // Allow the incident to execute for all other cases (e.g., world targets, caravans, or active maps).
             return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(Building_MusicalInstrument), "Tick")]
+    public static class Building_MusicalInstrument_Tick_Patch
+    {
+        private static FieldInfo soundPlayingField = AccessTools.Field(typeof(Building_MusicalInstrument), "soundPlaying");
+
+        [HarmonyPrefix]
+        public static void Prefix(Building_MusicalInstrument __instance)
+        {
+            // 맵이 정지되었다가 다시 시작될 때, 기존의 soundPlaying Sustainer는 이미 죽어있을 수 있습니다.
+            // 죽은 Sustainer를 Maintain하려고 하면 에러가 발생하므로, 미리 확인하여 null로 초기화해줍니다.
+            // 이렇게 하면 원본 Tick에서 새로운 Sustainer를 생성하게 됩니다.
+            if (soundPlayingField != null)
+            {
+                Sustainer soundPlaying = (Sustainer)soundPlayingField.GetValue(__instance);
+                if (soundPlaying != null && soundPlaying.Ended)
+                {
+                    soundPlayingField.SetValue(__instance, null);
+                }
+            }
         }
     }
 }
