@@ -15,6 +15,10 @@ namespace PauseOtherSettlementsSimulation
         public Dictionary<int, bool> settlementPausedStates = new Dictionary<int, bool>();
         public Dictionary<int, bool> anomalyMapPausedStates = new Dictionary<int, bool>();
 
+        // Key: Map unique ID, Value: Total ticks this map has been paused
+        public Dictionary<int, int> mapTotalPausedTicks = new Dictionary<int, int>();
+        // Key: Map unique ID, Value: The global tick when the map was last paused
+        public Dictionary<int, int> mapLastPauseTick = new Dictionary<int, int>();
 
         public CustomNameWorldComponent(World world) : base(world)
         {
@@ -28,11 +32,16 @@ namespace PauseOtherSettlementsSimulation
             Scribe_Collections.Look(ref settlementPausedStates, "settlementPausedStates", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref anomalyMapPausedStates, "anomalyMapPausedStates", LookMode.Value, LookMode.Value);
             
+            Scribe_Collections.Look(ref mapTotalPausedTicks, "mapTotalPausedTicks", LookMode.Value, LookMode.Value);
+            Scribe_Collections.Look(ref mapLastPauseTick, "mapLastPauseTick", LookMode.Value, LookMode.Value);
+
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 anomalyMapCustomNames ??= new Dictionary<int, string>();
                 settlementPausedStates ??= new Dictionary<int, bool>();
                 anomalyMapPausedStates ??= new Dictionary<int, bool>();
+                mapTotalPausedTicks ??= new Dictionary<int, int>();
+                mapLastPauseTick ??= new Dictionary<int, int>();
             }
         }
 
@@ -50,9 +59,29 @@ namespace PauseOtherSettlementsSimulation
             anomalyMapCustomNames[map.uniqueID] = name;
         }
 
+        // Track the last active map to detect switches
+        private Map lastCurrentMap = null;
+
         public override void WorldComponentTick()
         {
             base.WorldComponentTick();
+
+            // Detect Map Switch
+            Map currentMap = Find.CurrentMap;
+            if (currentMap != lastCurrentMap)
+            {
+                // Map has changed (or game loaded). Update pause states for ALL maps.
+                var maps = Find.Maps;
+                for (int i = 0; i < maps.Count; i++)
+                {
+                    Map m = maps[i];
+                    bool shouldSim = PauseOtherSettlementsSimulation.ShouldSimulateMap(m);
+                    // If shouldSim is true, pause is false.
+                    // If shouldSim is false, pause is true.
+                    PauseOtherSettlementsSimulation.ApplyMapPauseState(m, !shouldSim);
+                }
+                lastCurrentMap = currentMap;
+            }
 
             if (Find.TickManager.TicksGame % 60 != 0) return;
 
@@ -88,7 +117,15 @@ namespace PauseOtherSettlementsSimulation
                         isAway = false;
                     }
                     
-                    anomalyMapPausedStates[map.uniqueID] = isAway;
+                    bool oldState = false;
+                    if (anomalyMapPausedStates.TryGetValue(map.uniqueID, out bool val)) oldState = val;
+                    
+                    if (oldState != isAway)
+                    {
+                         anomalyMapPausedStates[map.uniqueID] = isAway;
+                         // Also trigger state application immediately for this map
+                         PauseOtherSettlementsSimulation.ApplyMapPauseState(map, isAway);
+                    }
                 }
             }
         }

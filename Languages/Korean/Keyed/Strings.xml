@@ -7,7 +7,7 @@
   <PauseNewAnomalyLayersByDefault_Label>새 anomaly 레이어를 기본으로 일시정지</PauseNewAnomalyLayersByDefault_Label>
   <PauseNewAnomalyLayersByDefault_Tooltip>체크하면, 새로 생성된 anomaly 레이어가 자동으로 '일시정지' 상태로 설정합니다.</PauseNewAnomalyLayersByDefault_Tooltip>
   <PauseAnomalyLayersWhenAway_Label>보지않는 소형 지역 일시정지</PauseAnomalyLayersWhenAway_Label>
-  <PauseAnomalyLayersWhenAway_Tooltip>체크하면, 해당 소형 지역 (anomaly 레이어)가 있는 정착지를 보고 있지 않을 때 자동으로 일시정지됩니다.\n*소량의 틱 발생</PauseAnomalyLayersWhenAway_Tooltip>
+  <PauseAnomalyLayersWhenAway_Tooltip>체크하면, 해당 소형 지역 (anomaly 레이어)가 있는 정착지를 보고 있지 않을 때 자동으로 일시정지됩니다.</PauseAnomalyLayersWhenAway_Tooltip>
 
   <!-- 일시정지 탭 -->
   <PauseTab_Title>정착지 시뮬레이션 제어</PauseTab_Title>

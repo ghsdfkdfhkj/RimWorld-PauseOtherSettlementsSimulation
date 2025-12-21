@@ -24,9 +24,9 @@ namespace PauseOtherSettlementsSimulation
         public PauseOtherSettlementsSimulation(ModContentPack content) : base(content)
         {
             Settings = GetSettings<PauseOtherSettlementsSimulationSettings>();
-            var harmony = new Harmony("YourName.PauseOtherSettlementsSimulation");
-            harmony.PatchAll();
         }
+
+
 
         public override string SettingsCategory() => "PauseOtherSettlementsSimulation".Translate();
 
@@ -122,8 +122,16 @@ namespace PauseOtherSettlementsSimulation
 			{
 				if (map == null) return;
 				bool already = mapsCurrentlyPaused.Contains(map.uniqueID);
+                var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
+
 				if (paused)
 				{
+                    // Time tracking: Record when pause started if not already recorded
+                    if (worldComp != null && !worldComp.mapLastPauseTick.ContainsKey(map.uniqueID))
+                    {
+                        worldComp.mapLastPauseTick[map.uniqueID] = Find.TickManager.TicksGame;
+                    }
+
 					if (!already)
 					{
 						// Remove all tickables on this map from tick lists
@@ -133,6 +141,18 @@ namespace PauseOtherSettlementsSimulation
 				}
 				else
 				{
+                    // Time tracking: Calculate duration and add to total
+                    if (worldComp != null && worldComp.mapLastPauseTick.TryGetValue(map.uniqueID, out int lastTick))
+                    {
+                        int duration = Find.TickManager.TicksGame - lastTick;
+                        if (duration > 0)
+                        {
+                            if (!worldComp.mapTotalPausedTicks.ContainsKey(map.uniqueID)) worldComp.mapTotalPausedTicks[map.uniqueID] = 0;
+                            worldComp.mapTotalPausedTicks[map.uniqueID] += duration;
+                        }
+                        worldComp.mapLastPauseTick.Remove(map.uniqueID);
+                    }
+
 					if (already)
 					{
 						// Re-register all things on this map

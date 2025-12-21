@@ -7,7 +7,7 @@
   <PauseNewAnomalyLayersByDefault_Label>Pause new anomaly layers by default</PauseNewAnomalyLayersByDefault_Label>
   <PauseNewAnomalyLayersByDefault_Tooltip>If checked, newly discovered anomaly layers will be paused by default.</PauseNewAnomalyLayersByDefault_Tooltip>
   <PauseAnomalyLayersWhenAway_Label>Pause pocket maps when away</PauseAnomalyLayersWhenAway_Label>
-  <PauseAnomalyLayersWhenAway_Tooltip>If checked, pocket maps (anomaly layers) will be automatically paused when you are not viewing their parent settlement.\n*This feature consumes a small amount of ticks.</PauseAnomalyLayersWhenAway_Tooltip>
+  <PauseAnomalyLayersWhenAway_Tooltip>If checked, pocket maps (anomaly layers) will be automatically paused when you are not viewing their parent settlement.</PauseAnomalyLayersWhenAway_Tooltip>
 
   <!-- Pause Tab -->
   <PauseTab_Title>Settlement Simulation Control</PauseTab_Title>

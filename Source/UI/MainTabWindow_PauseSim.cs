@@ -12,7 +12,7 @@ namespace PauseOtherSettlementsSimulation
     public class MainTabWindow_PauseSim : MainTabWindow
     {
         private Vector2 scrollPosition = Vector2.zero;
-        public override Vector2 InitialSize => new Vector2(600f, 400f);
+        public override Vector2 InitialSize => new Vector2(700f, 400f); // Wider for time columns
 
         public override void PreClose()
         {
@@ -22,10 +22,14 @@ namespace PauseOtherSettlementsSimulation
 
         public override void DoWindowContents(Rect inRect)
         {
-            PauseOtherSettlementsSimulation.UpdateKnownSettlements();
-            var settings = PauseOtherSettlementsSimulation.Settings;
-			var playerSettlements = settings.knownSettlements;
+            // Use direct query as requested to ensure all map parents (including space, camps) are captured.
+            // Logic mirrors "currentPlayerMapParents" but keeps as list to avoid dictionary key collisions on Tile -1.
+            var currentPlayerMapParents = Find.World.worldObjects.AllWorldObjects.OfType<MapParent>()
+                .Where(mp => mp.Faction == Faction.OfPlayer && mp.HasMap)
+                .ToList();
 
+            var settings = PauseOtherSettlementsSimulation.Settings;
+			
             var anomalyMapsByParent = new Dictionary<int, List<Map>>();
             foreach (var map in Find.Maps)
             {
@@ -63,7 +67,7 @@ namespace PauseOtherSettlementsSimulation
             mainListing.Begin(inRect);
 
             // --- 제목과 체크박스를 한 줄에 표시하기 위한 수동 레이아웃 ---
-            Rect headerRect = mainListing.GetRect(32f); // 제목을 위한 높이 확보
+            Rect headerRect = mainListing.GetRect(32f); 
             Text.Font = GameFont.Medium;
             
             // 제목 라벨 그리기
@@ -72,9 +76,9 @@ namespace PauseOtherSettlementsSimulation
             Widgets.Label(titleRect, "PauseTab_Title".Translate());
 
             // 체크박스 그리기
-            Text.Font = GameFont.Small; // 체크박스 라벨은 작은 폰트로
+            Text.Font = GameFont.Small; 
             Vector2 checkboxLabelSize = Text.CalcSize("PauseAnomalyLayersWhenAway_Label".Translate());
-            float checkboxTotalWidth = checkboxLabelSize.x + 24f + 4f; // 라벨 + 체크박스 + 간격
+            float checkboxTotalWidth = checkboxLabelSize.x + 24f + 4f; 
             Rect checkboxRect = new Rect(headerRect.xMax - checkboxTotalWidth, headerRect.y, checkboxTotalWidth, titleRect.height);
             
             Widgets.CheckboxLabeled(checkboxRect, "PauseAnomalyLayersWhenAway_Label".Translate(), ref settings.pauseAnomalyLayersWhenAway);
@@ -84,18 +88,18 @@ namespace PauseOtherSettlementsSimulation
             // --- 수동 레이아웃 끝 ---
 
 
-            if (!playerSettlements.Any())
+            if (!currentPlayerMapParents.Any())
             {
                 mainListing.Label("PauseTab_NoSettlements".Translate());
             }
             else
             {
-                DrawSettlementList(inRect, mainListing.CurHeight, playerSettlements, anomalyMapsByParent, settings);
+                DrawSettlementList(inRect, mainListing.CurHeight, currentPlayerMapParents, anomalyMapsByParent, settings);
             }
             mainListing.End();
         }
 
-        private void DrawSettlementList(Rect inRect, float startY, List<SettlementInfo> settlements, Dictionary<int, List<Map>> anomalyMapsByParent, PauseOtherSettlementsSimulationSettings settings)
+        private void DrawSettlementList(Rect inRect, float startY, List<MapParent> settlements, Dictionary<int, List<Map>> anomalyMapsByParent, PauseOtherSettlementsSimulationSettings settings)
         {
             float totalContentHeight = 0;
             bool firstElementForHeight = true;
@@ -103,12 +107,12 @@ namespace PauseOtherSettlementsSimulation
             {
                 if (!firstElementForHeight)
                 {
-                    totalContentHeight += 12f; // Gap height, same as GapLine(12f)
+                    totalContentHeight += 12f; 
                 }
-                totalContentHeight += 24f; // RowHeight
-                if (settings.settlementExpandedStates.TryGetValue(settlement.tile, out bool expanded) && expanded)
+                totalContentHeight += 24f; 
+                if (settings.settlementExpandedStates.TryGetValue(settlement.Tile, out bool expanded) && expanded)
                 {
-                    if (anomalyMapsByParent.TryGetValue(settlement.tile, out var anomalyMaps))
+                    if (anomalyMapsByParent.TryGetValue(settlement.Tile, out var anomalyMaps))
                     {
                         totalContentHeight += anomalyMaps.Count * 24f;
                     }
@@ -124,14 +128,14 @@ namespace PauseOtherSettlementsSimulation
             settlementListing.Begin(scrollViewContentRect);
             int currentMapTile = Find.CurrentMap?.Tile ?? -1;
             bool firstElement = true;
-            foreach (var settlementInfo in settlements)
+            foreach (var settlement in settlements)
             {
                 if (!firstElement)
                 {
                     settlementListing.GapLine(12f);
                 }
-                var anomalyMaps = anomalyMapsByParent.ContainsKey(settlementInfo.tile) ? anomalyMapsByParent[settlementInfo.tile] : null;
-                DrawSettlementRow(settlementListing, settlementInfo, anomalyMaps, settings, currentMapTile);
+                var anomalyMaps = anomalyMapsByParent.ContainsKey(settlement.Tile) ? anomalyMapsByParent[settlement.Tile] : null;
+                DrawSettlementRow(settlementListing, settlement, anomalyMaps, settings, currentMapTile);
                 firstElement = false;
             }
             // 부모 정착지에 묶이지 않은 특수 맵들을 추가로 표시
@@ -143,75 +147,94 @@ namespace PauseOtherSettlementsSimulation
                     Rect subRowRect = settlementListing.GetRect(24f);
                     string suffix = map.Tile.Layer.Def?.isSpace == true ? " (Orbit)" : " (Special)";
                     string label = Find.World.GetComponent<CustomNameWorldComponent>().GetCustomName(map) + suffix;
-                    DrawSingleMapRow(subRowRect, label, -1, map, false, false, settings, currentMapTile);
+                    // Pass null as parent for independent maps in the catch-all loop
+                    DrawSingleMapRow(subRowRect, label, -1, map, null, false, false, settings, currentMapTile);
                 }
             }
             settlementListing.End();
             Widgets.EndScrollView();
         }
 
-        private void DrawSettlementRow(Listing_Standard listing, SettlementInfo settlementInfo, List<Map> anomalyMaps, PauseOtherSettlementsSimulationSettings settings, int currentMapTile)
+        private void DrawSettlementRow(Listing_Standard listing, MapParent settlement, List<Map> anomalyMaps, PauseOtherSettlementsSimulationSettings settings, int currentMapTile)
         {
             bool hasAnomalyMaps = anomalyMaps != null && anomalyMaps.Any();
-            bool isExpanded = hasAnomalyMaps && settings.settlementExpandedStates.TryGetValue(settlementInfo.tile, out bool expanded) && expanded;
-            DrawSingleMapRow(listing.GetRect(24f), settlementInfo.name, settlementInfo.tile, null, hasAnomalyMaps, isExpanded, settings, currentMapTile);
+            bool isExpanded = hasAnomalyMaps && settings.settlementExpandedStates.TryGetValue(settlement.Tile, out bool expanded) && expanded;
+            // Pass the settlement object as 'parent' (4th arg)
+            DrawSingleMapRow(listing.GetRect(24f), settlement.Label, settlement.Tile, null, settlement, hasAnomalyMaps, isExpanded, settings, currentMapTile);
             if (isExpanded)
             {
                 foreach (var map in anomalyMaps)
                 {
                     Rect subRowRect = listing.GetRect(24f);
                     subRowRect.xMin += 20f;
-                    // Get custom name from our WorldComponent, which is save-specific.
+                    // Get custom name via WorldComponent
                     string anomalyLabel = Find.World.GetComponent<CustomNameWorldComponent>().GetCustomName(map);
-                    DrawSingleMapRow(subRowRect, anomalyLabel, -1, map, false, false, settings, currentMapTile);
+                    // Pass null as parent for child maps
+                    DrawSingleMapRow(subRowRect, anomalyLabel, -1, map, null, false, false, settings, currentMapTile);
                 }
             }
         }
 
-        private void DrawSingleMapRow(Rect rowRect, string label, int tileId, Map map, bool hasChildren, bool isExpanded, PauseOtherSettlementsSimulationSettings settings, int currentMapTile)
+        private void DrawSingleMapRow(Rect rowRect, string label, int tileId, Map map, MapParent parent, bool hasChildren, bool isExpanded, PauseOtherSettlementsSimulationSettings settings, int currentMapTile)
         {
             Widgets.DrawHighlightIfMouseover(rowRect);
             GUI.BeginGroup(rowRect);
 
-            const float iconWidth = 24f, checkboxWidth = 24f, expanderWidth = 24f, spacing = 4f;
-            bool isParentSettlement = map == null;
-            bool isCurrentMap = isParentSettlement ? (tileId == currentMapTile) : (map == Find.CurrentMap);
+            const float iconWidth = 24f, checkboxWidth = 24f, expanderWidth = 24f, spacing = 8f;
+            const float timeColumnWidth = 140f;
+            const float offsetColumnWidth = 80f;
+
+            bool isParentSettlement = parent != null; // It is a top-level settlement/map parent
+            bool isCurrentMap = isParentSettlement ? (parent.Map == Find.CurrentMap) : (map == Find.CurrentMap);
+            
+            // If parent is present but Map is null (rare, but possible if map lost), handle gracefully
+            if (isParentSettlement && parent.Map == null) isCurrentMap = false;
+
             float currentX = 0;
 
-            // --- UI 요소들의 영역(Rect) 미리 계산 ---
+            // --- Layout Calculation ---
             Rect expanderRect = new Rect(currentX, 0, hasChildren ? expanderWidth : 0, rowRect.height);
             currentX += expanderRect.width + (hasChildren ? spacing : 0);
 
-            float rightSideWidth = iconWidth + checkboxWidth + (spacing * 2);
-            float labelWidth = rowRect.width - currentX - rightSideWidth;
-            Rect labelRect = new Rect(currentX, 0, labelWidth, rowRect.height);
-            currentX += labelWidth + spacing;
+            float rightSideWidth = checkboxWidth + (spacing * 1);
+            
+            float centerAvailableWidth = rowRect.width - currentX - rightSideWidth;
+            float availableForLabelRename = centerAvailableWidth - timeColumnWidth - offsetColumnWidth - (spacing * 2);
+            float labelRenameWidth = availableForLabelRename - iconWidth - spacing;
+            
+            Rect labelRect = new Rect(currentX, 0, labelRenameWidth, rowRect.height);
+            currentX += labelRenameWidth + spacing;
 
             Rect renameRect = new Rect(currentX, 0, iconWidth, rowRect.height);
             currentX += iconWidth + spacing;
-            
+
+            Rect timeRect = new Rect(currentX, 0, timeColumnWidth, rowRect.height);
+            currentX += timeColumnWidth + spacing;
+
+            Rect offsetRect = new Rect(currentX, 0, offsetColumnWidth, rowRect.height);
+            currentX += offsetColumnWidth + spacing;
+
             Rect checkboxRect = new Rect(currentX, 0, checkboxWidth, rowRect.height);
 
-            // --- 그리기 및 이벤트 처리 ---
 
-            // 화살표 아이콘 (시각적)
+            // --- Draw Elements ---
+
+            // 1. Expander Arrow
             if (hasChildren)
             {
                 Vector2 iconCenter = expanderRect.center;
                 Matrix4x4 matrix = GUI.matrix;
-                // 기본 상태(오른쪽 화살표)에서, 아코디언이 열려있을 때만 90도 회전시켜 아래를 보게 함
                 if (isExpanded) UI.RotateAroundPivot(90f, iconCenter);
                 GUI.DrawTexture(new Rect(iconCenter.x - TexButton.Reveal.width / 2f, iconCenter.y - TexButton.Reveal.height / 2f, TexButton.Reveal.width, TexButton.Reveal.height), TexButton.Reveal);
                 GUI.matrix = matrix;
             }
 
-            // 라벨 (아코디언이 있으면 버튼으로, 없으면 그냥 텍스트로)
+            // 2. Label
             string labelText = label;
             if (isCurrentMap) labelText = $"{labelText} ({"CurrentMap".Translate()})";
 
             if (hasChildren)
             {
-                // 배경 없는 텍스트 버튼으로 만들어 라벨 클릭 시 아코디언 토글
                 if (Widgets.ButtonText(labelRect, labelText, drawBackground: false, doMouseoverSound: true, active: true))
                 {
                     settings.settlementExpandedStates[tileId] = !isExpanded;
@@ -222,52 +245,98 @@ namespace PauseOtherSettlementsSimulation
                 Widgets.Label(labelRect, labelText);
             }
 
-            // 이름 변경 버튼
+            // 3. Rename Button
             if (Widgets.ButtonImage(renameRect, TexButton.Rename))
             {
-                if (isParentSettlement)
+                if (isParentSettlement && parent is Settlement s)
                 {
-                    var settlementToRename = Find.World.worldObjects.SettlementAt(tileId);
-                    if (settlementToRename != null) Find.WindowStack.Add(new Dialog_RenameSettlementCustom(settlementToRename));
+                     Find.WindowStack.Add(new Dialog_RenameSettlementCustom(s));
                 }
                 else if (map != null)
                 {
                     Find.WindowStack.Add(new Dialog_RenameAnomalyLayerCustom(map));
                 }
+                else if (isParentSettlement)
+                {
+                    // Generic MapParent rename support if needed, or disable. 
+                    // Currently Dialog_RenameSettlementCustom takes 'Settlement'.
+                    // If it's a generic MapParent (like Ship), we might not support renaming or need a generic dialog.
+                    // For now, suppress if not Settlement to avoid crash. (Space ships usually rename via their own UI).
+                }
             }
             TooltipHandler.TipRegion(renameRect, "RenameSettlement".Translate());
 
-            // 체크박스
+            // 4. Time & Offset Columns
+            // Use passed map, or derive from parent
+            Map targetMap = map ?? parent?.Map;
+            
+            if (targetMap != null)
+            {
+                // Local Time
+                long localTicks = LocalTimeManager.GetLocalTicksAbs(targetMap);
+                
+                Vector2 longLat = Vector2.zero;
+                if (targetMap.Tile >= 0)
+                {
+                    longLat = Find.WorldGrid.LongLatOf(targetMap.Tile);
+                }
+                
+                string timeStr = GenDate.DateFullStringAt(localTicks, longLat);
+                
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Text.Font = GameFont.Tiny;
+                Widgets.Label(timeRect, timeStr);
+
+                // Time Offset
+                int globalTicks = Find.TickManager.TicksAbs;
+                long diffTicks = globalTicks - localTicks;
+                string offsetStr = "-";
+                
+                if (diffTicks > 0)
+                {
+                    float diffDays = diffTicks / 60000f;
+                    offsetStr = $"-{diffDays:F1}d";
+                    GUI.color = Color.gray;
+                }
+                else
+                {
+                    GUI.color = Color.white;
+                }
+                
+                Widgets.Label(offsetRect, offsetStr);
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+                Text.Anchor = TextAnchor.UpperLeft;
+            }
+
+
+            // 5. Checkbox
             var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
             bool isPaused;
             if (isParentSettlement)
             {
+                // Use tileId (which is settlement.Tile) for top-level pause state
                 isPaused = worldComp.settlementPausedStates.TryGetValue(tileId, out var ps) ? ps : settings.pauseNewSettlementsByDefault;
             }
-            else // Anomaly map
+            else
             {
-                if (worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out var aps))
-                {
-                    isPaused = aps;
-                }
-                else
-                {
-                    isPaused = settings.pauseNewAnomalyLayersByDefault;
-                }
+                // Use map.uniqueID for child maps
+                if (worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out var aps)) isPaused = aps;
+                else isPaused = settings.pauseNewAnomalyLayersByDefault;
             }
             bool tempIsPaused = isPaused;
             Widgets.Checkbox(checkboxRect.position, ref tempIsPaused);
             if (tempIsPaused != isPaused)
             {
                 if (isParentSettlement) PauseOtherSettlementsSimulation.SetSettlementPaused(tileId, tempIsPaused);
+                // Note: If SOS2 ship shares Tile -1, this will pause ALL ships sharing Tile -1.
+                // This is a known potential limitation but consistent with current "SetSettlementPaused" logic.
                 else PauseOtherSettlementsSimulation.SetAnomalyMapPaused(map.uniqueID, tempIsPaused);
             }
             
             string tooltip = isCurrentMap ? "PauseTab_CurrentSettlementEditableTooltip".Translate() : (isParentSettlement ? "PauseTab_SettlementTooltip".Translate() : "PauseTab_AnomalyLayerTooltip".Translate());
 
-            GUI.EndGroup(); // 그룹을 먼저 닫고
-
-            // 그룹 밖에서, 원래 좌표계를 사용하는 툴팁을 등록합니다.
+            GUI.EndGroup();
             TooltipHandler.TipRegion(rowRect, tooltip);
         }
     }
