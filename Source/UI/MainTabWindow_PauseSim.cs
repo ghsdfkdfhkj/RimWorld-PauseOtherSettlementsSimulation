@@ -281,7 +281,9 @@ namespace PauseOtherSettlementsSimulation
                     longLat = Find.WorldGrid.LongLatOf(targetMap.Tile);
                 }
                 
-                string timeStr = GenDate.DateFullStringAt(localTicks, longLat);
+                string dateStr = GenDate.DateFullStringAt(localTicks, longLat);
+                int hour = GenDate.HourOfDay(localTicks, longLat.x);
+                string timeStr = $"{dateStr}, {hour}h";
                 
                 Text.Anchor = TextAnchor.MiddleLeft;
                 Text.Font = GameFont.Tiny;
