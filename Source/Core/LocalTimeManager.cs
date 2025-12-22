@@ -56,7 +56,18 @@ namespace PauseOtherSettlementsSimulation
             for (int i = 0; i < maps.Count; i++)
             {
                 Map m = maps[i];
-                if (m.IsPlayerHome || m.Parent.Faction == Faction.OfPlayer)
+                // Check if this map should contribute to World Time (Max Time)
+                // 1. Is it a Player Home?
+                // 2. Does it belong to Player Faction?
+                // 3. Is it a Pocket Map linked to a Player Settlement?
+                bool isPlayerMap = m.IsPlayerHome || m.Parent.Faction == Faction.OfPlayer;
+
+                if (!isPlayerMap && m.Parent is PocketMapParent pmp && pmp.sourceMap != null && pmp.sourceMap.Parent.Faction == Faction.OfPlayer)
+                {
+                    isPlayerMap = true;
+                }
+
+                if (isPlayerMap)
                 {
                     int localAbs = GetLocalTicksAbs(m);
                     if (!found || localAbs > maxTicks)

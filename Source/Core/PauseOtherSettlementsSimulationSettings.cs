@@ -42,8 +42,8 @@ namespace PauseOtherSettlementsSimulation
         // New/Renamed settings
         public bool autoPausePocketMaps = true; // Renamed from pauseAnomalyLayersWhenAway
         public bool autoPauseSettlements = true; // New (Default: True)
-        public bool enablePocketMapSync = true; // New: Controls "Shared Presence" logic
-        public bool enableLocalTimeSystem = true; // New: Controls Local Time feature & UI
+        public bool enablePocketMapSync = false; // New: Controls "Shared Presence" logic
+        public bool enableLocalTimeSystem = false; // New: Controls Local Time feature & UI
 
         // Dictionary to store expanded states of settlements in the UI
         public Dictionary<int, bool> settlementExpandedStates = new Dictionary<int, bool>();

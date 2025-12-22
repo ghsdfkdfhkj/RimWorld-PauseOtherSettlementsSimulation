@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
   <PauseOtherSettlementsSimulation>다른 정착지 시뮬레이션 일시 정지</PauseOtherSettlementsSimulation>
-  <PauseOtherSettlements_Tooltip>활성화된 경우, 현재 지도 및 anomaly 레이어가 아닌 다른 정착지들은 일시 정지됩니다. 이 옵션을 비활성화하면 모든 다른 정착지가 시뮬레이션됩니다.</PauseOtherSettlements_Tooltip>
+  <PauseOtherSettlements_Tooltip>활성화된 경우, 현재 지도 및 소형 지역이 아닌 다른 정착지들은 일시 정지됩니다. 이 옵션을 비활성화하면 모든 다른 정착지가 시뮬레이션됩니다.</PauseOtherSettlements_Tooltip>
   <PauseTab_PauseNewSettlementsByDefault>새 정착지를 기본으로 일시정지</PauseTab_PauseNewSettlementsByDefault>
   <PauseTab_PauseNewSettlementsDefaultsTooltip>체크하면, 새로 생성된 모든 정착지가 자동으로 '일시정지' 상태로 설정됩니다.</PauseTab_PauseNewSettlementsDefaultsTooltip>
-  <PauseTab_PauseNewAnomalyLayersByDefault>새 소형 지역을 기본으로 일시정지</PauseTab_PauseNewAnomalyLayersByDefault>
-  <PauseTab_PauseNewAnomalyLayersDefaultsTooltip>체크하면, 새로 생성된 소형 지역이 자동으로 '일시정지' 상태로 설정됩니다.</PauseTab_PauseNewAnomalyLayersDefaultsTooltip>
+  <PauseTab_PauseNewPocketMapsByDefault>새 소형 지역을 기본으로 일시정지</PauseTab_PauseNewPocketMapsByDefault>
+  <PauseTab_PauseNewPocketMapsDefaultsTooltip>체크하면, 새로 발견된 소형 지역(지하 등)이 자동으로 '일시정지' 상태로 설정됩니다.</PauseTab_PauseNewPocketMapsDefaultsTooltip>
   
   <PauseTab_AutoPausePocketMaps>보지않는 소형 지역 자동 일시정지</PauseTab_AutoPausePocketMaps>
   <PauseTab_AutoPausePocketMapsTooltip>체크하면, 해당 소형 지역 (무덤, 채굴 캠프 등)을 보고 있지 않을 때 자동으로 일시정지됩니다.</PauseTab_AutoPausePocketMapsTooltip>
@@ -14,7 +14,7 @@
   <PauseTab_EnablePocketMapSync>정착지-소형 지역 상태 연동 사용</PauseTab_EnablePocketMapSync>
   <PauseTab_EnablePocketMapSyncTooltip>활성화하면 정착지와 소형 지역(지하 등)의 활성화 상태가 연동됩니다. (본진에 있을 때 지하가 멈추지 않고, 지하에 있을 때 본진이 멈추지 않습니다.)</PauseTab_EnablePocketMapSyncTooltip>
 
-  <PauseTab_EnableLocalTimeSystem>로컬 타임 시뮬레이션 사용</PauseTab_EnableLocalTimeSystem>
+  <PauseTab_EnableLocalTimeSystem>로컬 타임 시뮬레이션 사용 (베타)</PauseTab_EnableLocalTimeSystem>
   <PauseTab_EnableLocalTimeSystemTooltip>활성화하면 각 정착지의 시간이 독립적으로 흐르게 됩니다. 비활성화하면 바닐라처럼 모든 정착지가 글로벌 시간을 공유합니다.</PauseTab_EnableLocalTimeSystemTooltip>
 
   <!-- 일시정지 탭 -->
@@ -24,7 +24,8 @@
   <CurrentMap>현재 맵</CurrentMap>
   <RenameSettlement>정착지 이름 변경</RenameSettlement>
   <PauseTab_CurrentSettlementEditableTooltip>이 정착지의 일시정지 상태를 미리 설정할 수 있습니다. 하지만 이 설정과 관계없이 현재 보고 있는 맵은 항상 시뮬레이션됩니다.</PauseTab_CurrentSettlementEditableTooltip>
-  <PauseTab_AnomalyLayerTooltip>이 anomaly 레이어의 시뮬레이션을 일시정지하려면 체크하세요.</PauseTab_AnomalyLayerTooltip>
+  <PauseTab_PocketMapTooltip>이 소형 지역의 시뮬레이션을 일시 정지하려면 체크하세요.</PauseTab_PocketMapTooltip>
+  <PauseTab_QuickSettingsTooltip>자동 일시정지 설정</PauseTab_QuickSettingsTooltip>
 
   <!-- 세부 제어 라벨 -->
   <FineGrainedControls>세부 제어:</FineGrainedControls>

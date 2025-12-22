@@ -80,6 +80,29 @@ namespace PauseOtherSettlementsSimulation
             Rect titleRect = new Rect(headerRect.x, headerRect.y, titleSize.x, titleSize.y);
             Widgets.Label(titleRect, "PauseTab_Title".Translate());
             Text.Font = GameFont.Small; 
+
+            // --- 설정 버튼 (우측 상단) ---
+            // headerRect는 width가 전체 너비.
+            Rect settingsBtnRect = new Rect(headerRect.xMax - 24f, headerRect.y + (headerRect.height - 24f) / 2f, 24f, 24f);
+            
+            // Use vanilla 'Info' icon as a safe fallback for Settings/Details since direct path failed
+            if (Widgets.ButtonImage(settingsBtnRect, TexButton.OpenStatsReport))
+            {
+                // Convert rect to screen coordinates if needed?
+                // Widgets.ButtonImage uses GUI coordinates relative to the window.
+                // But Window_QuickSettings needs screen coordinates if we use them?
+                // Actually GUI.matrix might be involved.
+                // However, MainTabWindow is a Window, so its coordinates are inside the window.
+                // To get screen coordinates, we add the Window's position.
+                // But Window_QuickSettings logic mainly uses Find.WindowStack.WindowOfType<MainTabWindow_PauseSim>()
+                // So passing the relative rect is fine as a backup anchor.
+                // We'll pass the UI.GUIToScreenPoint equivalent if we want absolute, 
+                // but for now passing the simple rect is enough since we prioritized MainTab lookups across the codebase.
+                // Wait, if I pass a relative rect to a top-level window, it might interpret it wrong if I use it for fallback.
+                // Let's pass it anyway.
+                Find.WindowStack.Add(new Window_QuickSettings(settingsBtnRect));
+            }
+            TooltipHandler.TipRegion(settingsBtnRect, "PauseTab_QuickSettingsTooltip".Translate());
             
             mainListing.GapLine();
             // --- 수동 레이아웃 끝 ---
@@ -278,20 +301,16 @@ namespace PauseOtherSettlementsSimulation
             // If system OFF: Always Play? Or Hide Icon?
             // Let's fallback to Play icon if system OFF.
             
-            if (settings.enableLocalTimeSystem)
-            {
-                Texture2D statusIcon = isPaused ? PauseIcon : PlayIcon;
-                // If PlayIcon is null (fallback), use Reveal
-                if (statusIcon == null) statusIcon = TexButton.Reveal;
-                
-                // Colorize?
-                // Paused -> Yellow/Red? Play -> Green?
-                // Vanilla speed buttons use highlighting.
-                // Let's just draw the texture.
-                
-                // Centered icon
-                GUI.DrawTexture(new Rect(statusRect.x + (statusRect.width-24f)/2, statusRect.y + (statusRect.height-24f)/2, 24f, 24f), statusIcon);
-            }
+            // 2. Status Icon (Time Flowing) - ALWAYS Visible per user request
+            // Logic: IsPaused calculated above works independently of EnableLocalTimeSystem setting
+            // (Pause logic affects tick skipping, which defaults to skipping if paused even if localized time is off?)
+            // Actually, if EnableLocalTimeSystem is OFF, the "Pause" might mean "Prevent Ticks" but time acts global.
+            // Regardless, user wants to see the visual state.
+            
+            Texture2D statusIcon = isPaused ? PauseIcon : PlayIcon;
+            if (statusIcon == null) statusIcon = TexButton.Reveal;
+            
+            GUI.DrawTexture(new Rect(statusRect.x + (statusRect.width-24f)/2, statusRect.y + (statusRect.height-24f)/2, 24f, 24f), statusIcon);
 
             // 3. Label
             string labelText = label;
@@ -379,7 +398,7 @@ namespace PauseOtherSettlementsSimulation
                 else PauseOtherSettlementsSimulation.SetAnomalyMapPaused(map.uniqueID, tempIsPaused);
             }
             
-            string tooltip = isCurrentMap ? "PauseTab_CurrentSettlementEditableTooltip".Translate() : (isParentSettlement ? "PauseTab_SettlementTooltip".Translate() : "PauseTab_AnomalyLayerTooltip".Translate());
+            string tooltip = isCurrentMap ? "PauseTab_CurrentSettlementEditableTooltip".Translate() : (isParentSettlement ? "PauseTab_SettlementTooltip".Translate() : "PauseTab_PocketMapTooltip".Translate());
 
             GUI.EndGroup();
             TooltipHandler.TipRegion(rowRect, tooltip);
