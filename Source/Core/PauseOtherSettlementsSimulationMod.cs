@@ -89,8 +89,16 @@ namespace PauseOtherSettlementsSimulation
 
             var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
             bool isPaused;
-            if (map.Parent is PocketMapParent)
+            if (map.Parent is PocketMapParent pocket)
             {
+                // [Sync Feature] If sync is enabled, the pocket map simply mirrors its source map's state.
+                // This handles cases where the source map is the CurrentMap (Simulate=true) 
+                // or is another simulating map.
+                if (Settings.enablePocketMapSync && pocket.sourceMap != null)
+                {
+                    return ShouldSimulateMap(pocket.sourceMap);
+                }
+
                 if (worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out bool pausedState))
                 {
                     isPaused = pausedState;

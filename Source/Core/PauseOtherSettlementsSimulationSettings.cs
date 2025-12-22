@@ -42,6 +42,7 @@ namespace PauseOtherSettlementsSimulation
         // New/Renamed settings
         public bool autoPausePocketMaps = true; // Renamed from pauseAnomalyLayersWhenAway
         public bool autoPauseSettlements = true; // New (Default: True)
+        public bool enablePocketMapSync = true; // New: Controls "Shared Presence" logic
         public bool enableLocalTimeSystem = true; // New: Controls Local Time feature & UI
 
         // Dictionary to store expanded states of settlements in the UI
@@ -73,6 +74,7 @@ namespace PauseOtherSettlementsSimulation
             }
 
             Scribe_Values.Look(ref autoPauseSettlements, "autoPauseSettlements", true);
+            Scribe_Values.Look(ref enablePocketMapSync, "enablePocketMapSync", true);
             Scribe_Values.Look(ref enableLocalTimeSystem, "enableLocalTimeSystem", true);
 
             Scribe_Values.Look(ref manualLanguageOverride, "manualLanguageOverride", "Auto");
@@ -110,8 +112,58 @@ namespace PauseOtherSettlementsSimulation
             if (autoPauseSettlements)
             {
                 listingStandard.Gap(2f);
-                listingStandard.Indent(24f); 
-                listingStandard.CheckboxLabeled("PauseTab_AutoPausePocketMaps".Translate(), ref autoPausePocketMaps, "PauseTab_AutoPausePocketMapsTooltip".Translate());
+                listingStandard.Indent(24f);
+                listingStandard.ColumnWidth -= 24f; // Fix indent overflow
+                
+                // Logic for Mutual Exclusion (Sync vs Strict Auto-Pause)
+                // "Sync" implies Smart Auto-Pause (AutoPause=True, Sync=True)
+                // "Strict" implies Dumb Auto-Pause (AutoPause=True, Sync=False)
+                // "None" implies (AutoPause=False)
+
+                bool uiSync = enablePocketMapSync;
+                bool uiStrict = autoPausePocketMaps && !enablePocketMapSync;
+
+                bool oldUiSync = uiSync;
+                bool oldUiStrict = uiStrict;
+
+                listingStandard.CheckboxLabeled("PauseTab_EnablePocketMapSync".Translate(), ref uiSync, "PauseTab_EnablePocketMapSyncTooltip".Translate());
+                listingStandard.CheckboxLabeled("PauseTab_AutoPausePocketMaps".Translate(), ref uiStrict, "PauseTab_AutoPausePocketMapsTooltip".Translate());
+
+                // Detect Changes
+                if (uiSync != oldUiSync)
+                {
+                    if (uiSync)
+                    {
+                        // Sync turned ON -> Enable feature, Enable Sync
+                        enablePocketMapSync = true;
+                        autoPausePocketMaps = true;
+                        uiStrict = false; // Visual update not strictly needed as we redraw next frame, but good for logic clarity
+                    }
+                    else
+                    {
+                        // Sync turned OFF -> Disable Sync. Should we disable AutoPause too? 
+                        // User likely expects "Off" state.
+                        enablePocketMapSync = false;
+                        if (!uiStrict) autoPausePocketMaps = false; 
+                    }
+                }
+                else if (uiStrict != oldUiStrict)
+                {
+                    if (uiStrict)
+                    {
+                        // Strict turned ON -> Enable feature, Disable Sync
+                        autoPausePocketMaps = true;
+                        enablePocketMapSync = false;
+                    }
+                    else
+                    {
+                        // Strict turned OFF -> Disable feature
+                        autoPausePocketMaps = false;
+                        // Sync is already false if we authorized strict change
+                    }
+                }
+
+                listingStandard.ColumnWidth += 24f; // Restore width
                 listingStandard.Outdent(24f);
             }
             

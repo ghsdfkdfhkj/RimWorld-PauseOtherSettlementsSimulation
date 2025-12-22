@@ -93,6 +93,13 @@ namespace PauseOtherSettlementsSimulation.Patches
                     
                     absTick -= totalPaused;
                 }
+                else
+                {
+                    // [Global Time Sync]
+                    // If asking for a Tile without a Map (World map tile), use the effective World Time
+                    // which is synced to the fastest settlement.
+                    absTick = LocalTimeManager.GetWorldTicksAbs();
+                }
             }
         }
     }

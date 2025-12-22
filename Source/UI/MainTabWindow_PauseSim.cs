@@ -242,20 +242,27 @@ namespace PauseOtherSettlementsSimulation
             }
 
             // 5. Checkbox (Pre-calculate for status)
-            var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
+            // 5. Checkbox (Effective Status)
+            Map activeMap = map ?? parent?.Map;
             bool isPaused;
-            if (isParentSettlement)
+            
+            if (activeMap != null)
             {
-                isPaused = worldComp.settlementPausedStates.TryGetValue(tileId, out var ps) ? ps : false;
+                isPaused = !PauseOtherSettlementsSimulation.ShouldSimulateMap(activeMap);
             }
             else
             {
-                if (map != null)
+                var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
+                if (isParentSettlement)
                 {
-                    if (worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out var aps)) isPaused = aps;
-                    else isPaused = false;
+                    isPaused = worldComp.settlementPausedStates.TryGetValue(tileId, out var ps) ? ps : false;
                 }
-                else isPaused = false; // Fallback
+                else
+                {
+                    isPaused = false;
+                    if (map != null && worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out var aps))
+                        isPaused = aps;
+                }
             }
 
             // 2. Status Icon (Time Flowing)
@@ -339,8 +346,10 @@ namespace PauseOtherSettlementsSimulation
                 Widgets.Label(timeRect, timeStr);
 
                 // Time Offset
-                int globalTicks = Find.TickManager.TicksAbs;
-                long diffTicks = globalTicks - localTicks;
+                // Use the effective World Time (Fastest Settlement) for comparison, not the raw game tick.
+                // This ensures that as this map runs (while others pause), the gap shrinks.
+                int effectiveGlobalTicks = LocalTimeManager.GetWorldTicksAbs();
+                long diffTicks = effectiveGlobalTicks - localTicks;
                 string offsetStr = "-";
                 
                 if (diffTicks > 0)

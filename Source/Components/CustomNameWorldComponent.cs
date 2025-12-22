@@ -90,24 +90,40 @@ namespace PauseOtherSettlementsSimulation
 
             foreach (var map in Find.Maps)
             {
-                if (!map.IsPlayerHome && map.Parent.Faction != Faction.OfPlayer) continue;
+                // Check if this map should be processed
+                bool isPlayerMap = map.IsPlayerHome || map.Parent.Faction == Faction.OfPlayer;
+                
+                // Allow Pocket Maps that are linked to player settlements, even if the pocket itself (e.g. FleshPit) isn't "Player Faction"
+                if (!isPlayerMap && map.Parent is PocketMapParent pmpLinked && pmpLinked.sourceMap != null && pmpLinked.sourceMap.Parent.Faction == Faction.OfPlayer)
+                {
+                    isPlayerMap = true;
+                }
+
+                if (!isPlayerMap) continue;
 
                 // Determine if this map is subject to auto-pause
                 bool isTargetForAutoPause = false;
                 bool isAway = (Find.CurrentMap != map);
 
+
+
                 if (map.Parent is PocketMapParent pocketMapParent)
                 {
                     // User Request: "Auto-pause pocket maps is a sub-setting of auto-pause settlements"
-                    // So we only check pocket maps if settings.autoPauseSettlements is TRUE.
+                    // If autoPausePocketMaps is disabled, we never pause them (always run).
                     if (settings.autoPauseSettlements && settings.autoPausePocketMaps)
                     {
                         isTargetForAutoPause = true;
-                        // Special rule: If player is in the source map (parent settlement), we are not "away" effectively.
-                        // "Together" means: Parent Active <-> Child Active.
-                        if (pocketMapParent.sourceMap != null && Find.CurrentMap == pocketMapParent.sourceMap)
+                        
+                        // Sync Logic: If enabled, check parent presence.
+                        if (settings.enablePocketMapSync)
                         {
-                            isAway = false;
+                             // Special rule: If player is in the source map (parent settlement), we are not "away" effectively.
+                             // "Together" means: Parent Active <-> Child Active.
+                             if (pocketMapParent.sourceMap != null && Find.CurrentMap == pocketMapParent.sourceMap)
+                             {
+                                 isAway = false;
+                             }
                         }
                     }
                 }
@@ -117,15 +133,19 @@ namespace PauseOtherSettlementsSimulation
                      {
                          isTargetForAutoPause = true;
                          
-                         // Check if we are currently viewing a child Pocket Map of this settlement.
-                         // If so, we are effectively "at" the settlement (Synced behavior).
-                         if (isAway) // Only check if we are physically away from the settlement itself
+                         // Sync Logic: If enabled, check children pockets.
+                         if (settings.enablePocketMapSync)
                          {
-                             // Iterate maps to find if current map is a child of 'map'
-                             Map current = Find.CurrentMap;
-                             if (current != null && current.Parent is PocketMapParent pmp && pmp.sourceMap == map)
+                             // Check if we are currently viewing a child Pocket Map of this settlement.
+                             // If so, we are effectively "at" the settlement (Synced behavior).
+                             if (isAway) // Only check if we are physically away from the settlement itself
                              {
-                                 isAway = false;
+                                 // Iterate maps to find if current map is a child of 'map'
+                                 Map current = Find.CurrentMap;
+                                 if (current != null && current.Parent is PocketMapParent pmp && pmp.sourceMap == map)
+                                 {
+                                     isAway = false;
+                                 }
                              }
                          }
                      }

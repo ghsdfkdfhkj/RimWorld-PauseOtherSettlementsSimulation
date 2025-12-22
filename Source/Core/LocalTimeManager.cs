@@ -39,7 +39,36 @@ namespace PauseOtherSettlementsSimulation
 
         public static int GetLocalTicksAbs(Map map)
         {
+            if (map == null) return GetWorldTicksAbs();
             return GetLocalTicks(map) + Find.TickManager.gameStartAbsTick;
+        }
+
+        public static int GetWorldTicksAbs()
+        {
+            var settings = LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().GetSettings<PauseOtherSettlementsSimulationSettings>();
+            if (!settings.enableLocalTimeSystem) return Find.TickManager.TicksAbs;
+
+            // Find the maximum local time among all player maps
+            int maxTicks = 0;
+            bool found = false;
+
+            var maps = Find.Maps;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                Map m = maps[i];
+                if (m.IsPlayerHome || m.Parent.Faction == Faction.OfPlayer)
+                {
+                    int localAbs = GetLocalTicksAbs(m);
+                    if (!found || localAbs > maxTicks)
+                    {
+                        maxTicks = localAbs;
+                        found = true;
+                    }
+                }
+            }
+
+            if (found) return maxTicks;
+            return Find.TickManager.TicksAbs;
         }
     }
 }

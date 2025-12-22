@@ -11,6 +11,8 @@
   <PauseTab_AutoPausePocketMapsTooltip>체크하면, 해당 소형 지역 (무덤, 채굴 캠프 등)을 보고 있지 않을 때 자동으로 일시정지됩니다.</PauseTab_AutoPausePocketMapsTooltip>
   <PauseTab_AutoPauseSettlements>보지않는 정착지 자동 일시정지</PauseTab_AutoPauseSettlements>
   <PauseTab_AutoPauseSettlementsTooltip>체크하면, 일반 정착지를 보고 있지 않을 때 자동으로 일시정지됩니다.</PauseTab_AutoPauseSettlementsTooltip>
+  <PauseTab_EnablePocketMapSync>정착지-소형 지역 상태 연동 사용</PauseTab_EnablePocketMapSync>
+  <PauseTab_EnablePocketMapSyncTooltip>활성화하면 정착지와 소형 지역(지하 등)의 활성화 상태가 연동됩니다. (본진에 있을 때 지하가 멈추지 않고, 지하에 있을 때 본진이 멈추지 않습니다.)</PauseTab_EnablePocketMapSyncTooltip>
 
   <PauseTab_EnableLocalTimeSystem>로컬 타임 시뮬레이션 사용</PauseTab_EnableLocalTimeSystem>
   <PauseTab_EnableLocalTimeSystemTooltip>활성화하면 각 정착지의 시간이 독립적으로 흐르게 됩니다. 비활성화하면 바닐라처럼 모든 정착지가 글로벌 시간을 공유합니다.</PauseTab_EnableLocalTimeSystemTooltip>

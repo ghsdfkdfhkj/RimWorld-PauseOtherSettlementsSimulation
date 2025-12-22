@@ -11,6 +11,8 @@
   <PauseTab_AutoPausePocketMapsTooltip>If checked, pocket maps (e.g., pit gates, mining camps) will be automatically paused when you are not currently viewing them.</PauseTab_AutoPausePocketMapsTooltip>
   <PauseTab_AutoPauseSettlements>Auto-pause unseen settlements</PauseTab_AutoPauseSettlements>
   <PauseTab_AutoPauseSettlementsTooltip>If checked, regular settlements will be automatically paused when you are not currently viewing them.</PauseTab_AutoPauseSettlementsTooltip>
+  <PauseTab_EnablePocketMapSync>Synchronize Settlement-PocketMap Presence</PauseTab_EnablePocketMapSync>
+  <PauseTab_EnablePocketMapSyncTooltip>If enabled, settlements and their pocket maps will share active status. (Viewing the main settlement keeps the pocket map running, and vice versa).</PauseTab_EnablePocketMapSyncTooltip>
 
   <PauseTab_EnableLocalTimeSystem>Enable Local Time Simulation</PauseTab_EnableLocalTimeSystem>
   <PauseTab_EnableLocalTimeSystemTooltip>If enabled, each settlement will have its own independent time flow (freezing when paused). Disabling this reverts to Vanilla behavior where all settlements share Global Time.</PauseTab_EnableLocalTimeSystemTooltip>
