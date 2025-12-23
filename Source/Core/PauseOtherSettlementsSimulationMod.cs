@@ -94,7 +94,8 @@ namespace PauseOtherSettlementsSimulation
                 // [Sync Feature] If sync is enabled, the pocket map simply mirrors its source map's state.
                 // This handles cases where the source map is the CurrentMap (Simulate=true) 
                 // or is another simulating map.
-                if (Settings.enablePocketMapSync && pocket.sourceMap != null)
+                // Sync should only apply if Auto-Pause is generally enabled.
+                if (Settings.autoPauseSettlements && Settings.enablePocketMapSync && pocket.sourceMap != null)
                 {
                     return ShouldSimulateMap(pocket.sourceMap);
                 }

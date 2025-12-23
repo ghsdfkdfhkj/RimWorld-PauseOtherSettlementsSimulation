@@ -61,10 +61,32 @@ namespace PauseOtherSettlementsSimulation
 
         // Track the last active map to detect switches
         private Map lastCurrentMap = null;
+        private bool? lastAutoPauseSettlements = null;
 
         public override void WorldComponentTick()
         {
             base.WorldComponentTick();
+
+            var settings = PauseOtherSettlementsSimulation.Settings;
+            if (settings == null) return;
+
+            // Detect Setting Toggle (True -> False)
+            // Initialize if null (first tick)
+            if (lastAutoPauseSettlements == null)
+            {
+                 lastAutoPauseSettlements = settings.autoPauseSettlements;
+                 // If starting with auto-pause disabled, ensure everything is unpaused to clear stale states
+                 if (settings.autoPauseSettlements == false)
+                 {
+                     UnpauseAllMaps();
+                 }
+            }
+
+            if (lastAutoPauseSettlements.Value == true && settings.autoPauseSettlements == false)
+            {
+                UnpauseAllMaps();
+            }
+            lastAutoPauseSettlements = settings.autoPauseSettlements;
 
             // Detect Map Switch
             Map currentMap = Find.CurrentMap;
@@ -85,8 +107,6 @@ namespace PauseOtherSettlementsSimulation
 
             if (Find.TickManager.TicksGame % 60 != 0) return;
 
-            var settings = LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().GetSettings<PauseOtherSettlementsSimulationSettings>();
-            if (settings == null) return;
 
             foreach (var map in Find.Maps)
             {
@@ -179,6 +199,23 @@ namespace PauseOtherSettlementsSimulation
                         PauseOtherSettlementsSimulation.ApplyMapPauseState(map, isAway);
                     }
                 }
+            }
+        }
+
+        private void UnpauseAllMaps()
+        {
+            // Reset dictionaries
+            // Create keys list to avoid modification during enumeration if needed
+            var settlementKeys = settlementPausedStates.Keys.ToList();
+            foreach (var key in settlementKeys) settlementPausedStates[key] = false;
+
+            var anomalyKeys = anomalyMapPausedStates.Keys.ToList();
+            foreach (var key in anomalyKeys) anomalyMapPausedStates[key] = false;
+
+            // Apply to all maps
+            foreach (var map in Find.Maps)
+            {
+                PauseOtherSettlementsSimulation.ApplyMapPauseState(map, false);
             }
         }
     }
