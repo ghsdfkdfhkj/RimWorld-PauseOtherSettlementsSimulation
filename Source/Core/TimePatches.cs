@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using PauseOtherSettlementsSimulation;
+using RimWorld.Planet;
 
 namespace PauseOtherSettlementsSimulation.Patches
 {
@@ -65,7 +66,11 @@ namespace PauseOtherSettlementsSimulation.Patches
             // and we have a map for this tile, adjust the tick to Local Time.
             // This ensures seasonal temperatures match the local season.
             
-            int globalNow = Find.TickManager.TicksAbs;
+            int globalNow = 0;
+            if (Find.TickManager.gameStartAbsTick != 0)
+            {
+                globalNow = Find.TickManager.TicksAbs;
+            }
             if (Math.Abs(globalNow - absTick) < 5000)
             {
                 Map map = Current.Game.Maps.FirstOrDefault(m => m.Tile == tile);
@@ -150,4 +155,64 @@ namespace PauseOtherSettlementsSimulation.Patches
             return codes;
         }
     }
+
+    [HarmonyPatch(typeof(StorytellerUtility), "DefaultThreatPointsNow")]
+    public static class StorytellerUtility_DefaultThreatPointsNow_Patch
+    {
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            
+            // StorytellerUtility.DefaultThreatPointsNow(IIncidentTarget target)
+            // We want to replace TicksGame or TicksAbs usage with LocalTimeManager.GetLocalTicks(Map)
+            // But we need 'Map'. 'target' is IIncidentTarget.
+            // target as Map ?? (target as MapParent)?.Map ?? ...
+            
+            var tickManagerProp = AccessTools.PropertyGetter(typeof(Find), nameof(Find.TickManager));
+            var ticksGameProp = AccessTools.PropertyGetter(typeof(TickManager), nameof(TickManager.TicksGame));
+            var ticksAbsProp = AccessTools.PropertyGetter(typeof(TickManager), nameof(TickManager.TicksAbs));
+            
+            var getLocalTicksMethod = AccessTools.Method(typeof(StorytellerUtility_DefaultThreatPointsNow_Patch), nameof(GetLocalTicksForTarget));
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                // Looking for TicksGame usually used for "Time Points" calculation
+                if (codes[i].Calls(ticksGameProp) || codes[i].Calls(ticksAbsProp))
+                {
+                    if (i > 0 && codes[i - 1].Calls(tickManagerProp))
+                    {
+                        // Replace 'call Find.TickManager' with 'ldarg.0' (IIncidentTarget)
+                        codes[i - 1].opcode = OpCodes.Ldarg_0;
+                        codes[i - 1].operand = null;
+                        
+                        // Replace 'callvirt TicksGame' with 'call GetLocalTicksForTarget(IIncidentTarget)'
+                        codes[i].opcode = OpCodes.Call;
+                        codes[i].operand = getLocalTicksMethod;
+                        
+                        // found = true; not needed
+                    }
+                }
+            }
+            
+            return codes;
+        }
+
+        public static int GetLocalTicksForTarget(IIncidentTarget target)
+        {
+            Map map = target as Map;
+            if (map == null && target is MapParent mp) map = mp.Map;
+            
+            if (map != null)
+            {
+                return LocalTimeManager.GetLocalTicks(map);
+            }
+            
+            return Find.TickManager.TicksGame;
+        }
+    }
+
+    // [REMOVED] Letter_GetMouseoverText_Patch caused crash because GetMouseoverText is abstract.
+    // We would need to patch ChoiceLetter or other concrete classes instead.
+    // For now, removing to fix crash.
 }

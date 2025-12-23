@@ -40,13 +40,21 @@ namespace PauseOtherSettlementsSimulation
         public static int GetLocalTicksAbs(Map map)
         {
             if (map == null) return GetWorldTicksAbs();
-            return GetLocalTicks(map) + Find.TickManager.gameStartAbsTick;
+            // GenTicks.TicksAbs is safer than doing manual calculation if gameStartAbsTick isn't ready
+            try 
+            {
+               return GetLocalTicks(map) + Find.TickManager.gameStartAbsTick;
+            }
+            catch
+            {
+               return (Find.TickManager.gameStartAbsTick == 0) ? 0 : Find.TickManager.TicksAbs;
+            }
         }
 
         public static int GetWorldTicksAbs()
         {
             var settings = LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().GetSettings<PauseOtherSettlementsSimulationSettings>();
-            if (!settings.enableLocalTimeSystem) return Find.TickManager.TicksAbs;
+            if (!settings.enableLocalTimeSystem) return (Find.TickManager.gameStartAbsTick == 0) ? 0 : Find.TickManager.TicksAbs;
 
             // Find the maximum local time among all player maps
             int maxTicks = 0;
@@ -79,7 +87,7 @@ namespace PauseOtherSettlementsSimulation
             }
 
             if (found) return maxTicks;
-            return Find.TickManager.TicksAbs;
+            return (Find.TickManager.gameStartAbsTick == 0) ? 0 : Find.TickManager.TicksAbs;
         }
     }
 }
