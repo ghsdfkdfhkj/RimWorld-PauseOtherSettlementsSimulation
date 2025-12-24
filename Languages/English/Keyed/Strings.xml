@@ -39,4 +39,6 @@
   <PauseMentalState_Tooltip>If enabled, mental breaks, inspirations, and other mood-related events will be paused for pawns in non-active settlements.</PauseMentalState_Tooltip>
   <PauseAgeing_Label>Pause ageing</PauseAgeing_Label>
   <PauseAgeing_Tooltip>If enabled, pawns on non-visible maps will not get older.</PauseAgeing_Tooltip>
+  <PauseTab_Caravans>Caravans</PauseTab_Caravans>
+  <PauseTab_CaravanTooltip>Check to pause this caravan.</PauseTab_CaravanTooltip>
 </LanguageData>

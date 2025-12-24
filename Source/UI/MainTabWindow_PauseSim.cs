@@ -90,6 +90,8 @@ namespace PauseOtherSettlementsSimulation
 
         private void DrawSettlementList(Rect inRect, float startY, List<MapParent> settlements, Dictionary<int, List<Map>> anomalyMapsByParent, PauseOtherSettlementsSimulationSettings settings)
         {
+            var caravans = Find.WorldObjects.Caravans.Where(c => c.Faction == Faction.OfPlayer).ToList();
+
             float totalContentHeight = 0;
             bool firstElementForHeight = true;
             foreach (var settlement in settlements)
@@ -107,6 +109,28 @@ namespace PauseOtherSettlementsSimulation
                     }
                 }
                 firstElementForHeight = false;
+            }
+
+            // Independent maps height logic (existing but implicitly handled in scrolling? No, need to account for it if they exist)
+            // The previous code loop for independent maps seems to be missing from height calc! 
+            // The drawing loop for independent maps IS there (lines 130+), but height calc loop (lines 95+) ONLY iterates settlements.
+            // I should fix that too, but focusing on Caravans for now to fix build.
+            // Actually, if I ignore independent maps height, the scrollbar will be short. 
+            // Let's add independent maps height.
+            int independentMapCount = 0;
+            foreach (var kv in anomalyMapsByParent)
+            {
+                 if (kv.Key < 0) independentMapCount += kv.Value.Count;
+            }
+            if (independentMapCount > 0) totalContentHeight += independentMapCount * 24f;
+
+
+            if (caravans.Count > 0)
+            {
+                totalContentHeight += 12f; // GapLine
+                totalContentHeight += 24f; // Label
+                totalContentHeight += 4f;  // Gap
+                totalContentHeight += caravans.Count * 30f;
             }
 
             Rect scrollViewHostRect = new Rect(inRect.x, startY, inRect.width, inRect.height - startY);
@@ -140,6 +164,22 @@ namespace PauseOtherSettlementsSimulation
                     DrawSingleMapRow(subRowRect, label, -1, map, null, false, false, settings, currentMapTile);
                 }
             }
+            // ---------------------------------------------------------
+            // 3. Caravans (Independent)
+            // ---------------------------------------------------------
+
+                if (caravans.Count > 0)
+            {
+                settlementListing.GapLine();
+                settlementListing.Label("PauseTab_Caravans".Translate());
+                settlementListing.Gap(4f);
+
+                foreach (var caravan in caravans)
+                {
+                    DrawCaravanRow(settlementListing.GetRect(24f), caravan, settings);
+                }
+            }
+
             settlementListing.End();
             Widgets.EndScrollView();
         }
@@ -162,6 +202,91 @@ namespace PauseOtherSettlementsSimulation
                     DrawSingleMapRow(subRowRect, anomalyLabel, -1, map, null, false, false, settings, currentMapTile);
                 }
             }
+        }
+
+        private void DrawCaravanRow(Rect rowRect, Caravan caravan, PauseOtherSettlementsSimulationSettings settings)
+        {
+            Widgets.DrawHighlightIfMouseover(rowRect);
+            GUI.BeginGroup(rowRect);
+
+            // Layout constants matching DrawSingleMapRow
+            const float iconWidth = 24f, checkboxWidth = 24f, expanderWidth = 24f, statusWidth = 24f, spacing = 8f;
+            const float timeColumnWidth = 140f; 
+            const float offsetColumnWidth = 80f;
+
+            float currentX = 0;
+
+            // Expander Placeholder (Caravans have no children)
+            Rect expanderRect = new Rect(currentX, 0, expanderWidth, rowRect.height);
+            currentX += expanderWidth + spacing;
+
+            Rect statusRect = new Rect(currentX, 0, statusWidth, rowRect.height);
+            currentX += statusWidth + spacing;
+
+            float rightSideWidth = checkboxWidth + (spacing * 1);
+            float centerAvailableWidth = rowRect.width - currentX - rightSideWidth;
+            
+            // Adjust label width if local time system enabled (to match alignment with map rows)
+            // Even though Caravans don't show local time, keeping alignment looks better.
+            if (settings.enableLocalTimeSystem)
+            {
+               centerAvailableWidth -= (timeColumnWidth + offsetColumnWidth + (spacing * 2));
+            }
+
+            float labelRenameWidth = centerAvailableWidth - iconWidth - spacing;
+
+            Rect labelRect = new Rect(currentX, 0, labelRenameWidth, rowRect.height);
+            currentX += labelRenameWidth + spacing;
+            
+            Rect renameRect = new Rect(currentX, 0, iconWidth, rowRect.height);
+            currentX += iconWidth + spacing;
+
+            // Skip Time/Offset Columns (just advance X)
+            if (settings.enableLocalTimeSystem)
+            {
+                 currentX += timeColumnWidth + spacing;
+                 currentX += offsetColumnWidth + spacing;
+            }
+
+            Rect checkboxRect = new Rect(currentX, 0, checkboxWidth, rowRect.height);
+
+            // --- Draw Elements ---
+
+            // Checkbox & Pause State
+            var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
+            bool isPaused = worldComp.caravanPausedStates.TryGetValue(caravan.ID, out bool p) ? p : false;
+
+            // Status Icon
+            Texture2D statusIcon = isPaused ? PauseIcon : PlayIcon;
+            if (statusIcon == null) statusIcon = TexButton.Reveal;
+            GUI.DrawTexture(new Rect(statusRect.x + (statusRect.width - 24f) / 2, statusRect.y + (statusRect.height - 24f) / 2, 24f, 24f), statusIcon);
+
+            // Label
+            string label = $"{caravan.Label} ({caravan.PawnsListForReading.Count})";
+            if (Widgets.ButtonText(labelRect, label, drawBackground: false, doMouseoverSound: true, active: true))
+            {
+                CameraJumper.TryJumpAndSelect(caravan);
+            }
+
+            // Rename Button
+            /*/
+            if (Widgets.ButtonImage(renameRect, TexButton.Rename))
+            {
+                Find.WindowStack.Add(new Dialog_RenameCaravan(caravan));
+            }
+            TooltipHandler.TipRegion(renameRect, "RenameCaravan".Translate());
+            /*/
+
+            // Checkbox
+            bool tempIsPaused = isPaused;
+            Widgets.Checkbox(checkboxRect.position, ref tempIsPaused);
+            if (tempIsPaused != isPaused)
+            {
+                CaravanSimulationSystem.SetCaravanPaused(caravan.ID, tempIsPaused);
+            }
+
+            GUI.EndGroup();
+            TooltipHandler.TipRegion(rowRect, "PauseTab_CaravanTooltip".Translate());
         }
 
         private void DrawSingleMapRow(Rect rowRect, string label, int tileId, Map map, MapParent parent, bool hasChildren, bool isExpanded, PauseOtherSettlementsSimulationSettings settings, int currentMapTile)

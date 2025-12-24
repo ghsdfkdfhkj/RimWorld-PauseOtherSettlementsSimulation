@@ -133,6 +133,21 @@ namespace PauseOtherSettlementsSimulation
 			return !isPaused;
         }
 
+        public static bool ShouldSimulatePawn(Pawn pawn)
+        {
+            if (pawn == null) return true;
+            if (pawn.Map != null) return ShouldSimulateMap(pawn.Map);
+            
+            // Handle Caravan Pawns
+            var caravan = pawn.GetCaravan();
+            if (caravan != null)
+            {
+                 return CaravanSimulationSystem.ShouldSimulateCaravan(caravan);
+            }
+            
+            return true;
+        }
+
 			public static void ApplyMapPauseState(Map map, bool paused)
 			{
 				if (map == null) return;
@@ -359,7 +374,7 @@ namespace PauseOtherSettlementsSimulation
         public static bool Prefix(Pawn ___pawn)
         {
             if (!PauseOtherSettlementsSimulation.Settings.PauseAgeing) return true;
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map);
+            return PauseOtherSettlementsSimulation.ShouldSimulatePawn(___pawn);
         }
     }
 
@@ -369,15 +384,15 @@ namespace PauseOtherSettlementsSimulation
         [HarmonyPrefix]
         public static bool Prefix(Gene_Hemogen __instance)
         {
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(__instance.pawn?.Map);
+            return PauseOtherSettlementsSimulation.ShouldSimulatePawn(__instance.pawn);
         }
     }
 
     [HarmonyPatch(typeof(JobDriver), "DriverTick")]
-    public static class JobDriverTickPatch { [HarmonyPrefix] public static bool Prefix(JobDriver __instance) => !PauseOtherSettlementsSimulation.Settings.PauseOngoingJobs || __instance.pawn?.Map == null || PauseOtherSettlementsSimulation.ShouldSimulateMap(__instance.pawn.Map); }
+    public static class JobDriverTickPatch { [HarmonyPrefix] public static bool Prefix(JobDriver __instance) => !PauseOtherSettlementsSimulation.Settings.PauseOngoingJobs || __instance.pawn == null || PauseOtherSettlementsSimulation.ShouldSimulatePawn(__instance.pawn); }
 
     [HarmonyPatch(typeof(JobDriver), "DriverTickInterval")]
-    public static class JobDriverTickIntervalPatch { [HarmonyPrefix] public static bool Prefix(JobDriver __instance) => !PauseOtherSettlementsSimulation.Settings.PauseOngoingJobs || __instance.pawn?.Map == null || PauseOtherSettlementsSimulation.ShouldSimulateMap(__instance.pawn.Map); }
+    public static class JobDriverTickIntervalPatch { [HarmonyPrefix] public static bool Prefix(JobDriver __instance) => !PauseOtherSettlementsSimulation.Settings.PauseOngoingJobs || __instance.pawn == null || PauseOtherSettlementsSimulation.ShouldSimulatePawn(__instance.pawn); }
 
     [HarmonyPatch(typeof(Pawn_TrainingTracker), "TrainingTrackerTickRare")]
     public static class Pawn_TrainingTracker_TrainingTrackerTickRare_Patch
@@ -387,7 +402,7 @@ namespace PauseOtherSettlementsSimulation
         [HarmonyPrefix]
         public static bool Prefix(Pawn_TrainingTracker __instance, Pawn ___pawn)
         {
-            if (PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map)) return true;
+            if (PauseOtherSettlementsSimulation.ShouldSimulatePawn(___pawn)) return true;
 
             // 맵이 정지된 동안에는 훈련 감퇴 타이머만 흐르게 하여(250틱 추가),
             // 나중에 맵이 다시 로드되었을 때 급격한 감퇴가 일어나지 않도록 보호합니다.
@@ -407,7 +422,7 @@ namespace PauseOtherSettlementsSimulation
         [HarmonyPrefix]
         public static bool Prefix(Pawn ___pawn)
         {
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map);
+            return PauseOtherSettlementsSimulation.ShouldSimulatePawn(___pawn);
         }
     }
 
@@ -417,7 +432,7 @@ namespace PauseOtherSettlementsSimulation
         [HarmonyPrefix]
         public static bool Prefix(Pawn ___pawn)
         {
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map);
+            return PauseOtherSettlementsSimulation.ShouldSimulatePawn(___pawn);
         }
     }
 
@@ -428,7 +443,7 @@ namespace PauseOtherSettlementsSimulation
         public static bool Prefix(Pawn ___pawn)
         {
             if (!PauseOtherSettlementsSimulation.Settings.PauseHealth) return true;
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map);
+            return PauseOtherSettlementsSimulation.ShouldSimulatePawn(___pawn);
         }
     }
     
@@ -439,7 +454,7 @@ namespace PauseOtherSettlementsSimulation
         public static bool Prefix(Pawn ___pawn)
         {
             if (!PauseOtherSettlementsSimulation.Settings.PauseHealth) return true;
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(___pawn?.Map);
+            return PauseOtherSettlementsSimulation.ShouldSimulatePawn(___pawn);
         }
     }
 
@@ -450,7 +465,7 @@ namespace PauseOtherSettlementsSimulation
         public static bool Prefix(Pawn_MindState __instance)
         {
             if (!PauseOtherSettlementsSimulation.Settings.PauseMentalState) return true;
-            return PauseOtherSettlementsSimulation.ShouldSimulateMap(__instance.pawn?.Map);
+            return PauseOtherSettlementsSimulation.ShouldSimulatePawn(__instance.pawn);
         }
     }
 
@@ -526,6 +541,14 @@ namespace PauseOtherSettlementsSimulation
                 {
                     return false; // This aborts the original TryExecute method, preventing the incident.
                 }
+            }
+            // Check if the incident's target is a Caravan.
+            else if (parms.target is Caravan caravan)
+            {
+                 if (!CaravanSimulationSystem.ShouldSimulateCaravan(caravan))
+                 {
+                     return false;
+                 }
             }
 
             // Allow the incident to execute for all other cases (e.g., world targets, caravans, or active maps).

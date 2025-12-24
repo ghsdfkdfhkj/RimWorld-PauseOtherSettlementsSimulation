@@ -39,4 +39,6 @@
   <PauseMentalState_Tooltip>활성화하면, 시뮬레이션되지 않는 맵에 있는 폰들의 정신 붕괴, 영감, 기타 기분 관련 이벤트가 일시정지됩니다.</PauseMentalState_Tooltip>
   <PauseAgeing_Label>노화 일시정지</PauseAgeing_Label>
   <PauseAgeing_Tooltip>활성화하면, 보이지 않는 맵의 폰들은 나이를 먹지 않습니다.</PauseAgeing_Tooltip>
+  <PauseTab_Caravans>상단</PauseTab_Caravans>
+  <PauseTab_CaravanTooltip>체크 시 이 상단을 일시 정지합니다.</PauseTab_CaravanTooltip>
 </LanguageData>

@@ -14,6 +14,7 @@ namespace PauseOtherSettlementsSimulation
         private Dictionary<int, string> anomalyMapCustomNames = new Dictionary<int, string>();
         public Dictionary<int, bool> settlementPausedStates = new Dictionary<int, bool>();
         public Dictionary<int, bool> anomalyMapPausedStates = new Dictionary<int, bool>();
+        public Dictionary<int, bool> caravanPausedStates = new Dictionary<int, bool>();
 
         // Key: Map unique ID, Value: Total ticks this map has been paused
         public Dictionary<int, int> mapTotalPausedTicks = new Dictionary<int, int>();
@@ -31,6 +32,7 @@ namespace PauseOtherSettlementsSimulation
             Scribe_Collections.Look(ref anomalyMapCustomNames, "anomalyMapCustomNames", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref settlementPausedStates, "settlementPausedStates", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref anomalyMapPausedStates, "anomalyMapPausedStates", LookMode.Value, LookMode.Value);
+            Scribe_Collections.Look(ref caravanPausedStates, "caravanPausedStates", LookMode.Value, LookMode.Value);
             
             Scribe_Collections.Look(ref mapTotalPausedTicks, "mapTotalPausedTicks", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref mapLastPauseTick, "mapLastPauseTick", LookMode.Value, LookMode.Value);
@@ -40,6 +42,7 @@ namespace PauseOtherSettlementsSimulation
                 anomalyMapCustomNames ??= new Dictionary<int, string>();
                 settlementPausedStates ??= new Dictionary<int, bool>();
                 anomalyMapPausedStates ??= new Dictionary<int, bool>();
+                caravanPausedStates ??= new Dictionary<int, bool>();
                 mapTotalPausedTicks ??= new Dictionary<int, int>();
                 mapLastPauseTick ??= new Dictionary<int, int>();
             }
