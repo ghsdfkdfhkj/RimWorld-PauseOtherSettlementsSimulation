@@ -46,11 +46,11 @@ namespace PauseOtherSettlementsSimulation
             var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
 
             // Get all current player settlements from the world (surface)
-            // Get all current player owned map parents (Settlements, Camps, Space Stations, etc.)
+            // Get all current player owned map parents OR maps with player colonists (e.g. SOS2 battles)
             // We only care about things that have a map (or are generating one) and belong to the player.
             // Some mods might use MapParent for camps without them being "Settlement" class.
             var currentPlayerMapParents = Find.World.worldObjects.AllWorldObjects.OfType<MapParent>()
-                .Where(mp => mp.Faction == Faction.OfPlayer && mp.HasMap)
+                .Where(mp => mp.HasMap && (mp.Faction == Faction.OfPlayer || (mp.Map != null && mp.Map.mapPawns.AnyColonistSpawned)))
                 .ToDictionary(mp => mp.Tile, mp => mp.Label);
 
             // Remove settlements from our list that no longer exist in the world
@@ -118,6 +118,11 @@ namespace PauseOtherSettlementsSimulation
             {
                  isPaused = worldComp.settlementPausedStates.TryGetValue(mapParent.Tile, out bool pausedState) ? pausedState : false;
             }
+            // [SOS2 Support] Support generic maps that have player colonists (e.g. Battles)
+            else if (map.mapPawns.AnyColonistSpawned)
+            {
+                isPaused = worldComp.anomalyMapPausedStates.TryGetValue(map.uniqueID, out bool pausedState) ? pausedState : false;
+            }
 			else
 			{
 				// 기타 맵(우주/특수 맵 등)은 map.uniqueID 기준으로 제어
@@ -182,10 +187,12 @@ namespace PauseOtherSettlementsSimulation
 				bool old = worldComp.settlementPausedStates.TryGetValue(tileId, out var prev) ? prev : false;
 				if (old == paused) return;
 				worldComp.settlementPausedStates[tileId] = paused;
-				var settlement = Find.World.worldObjects.SettlementAt(tileId);
-				if (settlement != null && settlement.HasMap)
+
+                // Support any MapParent (e.g., SOS2 Ship, Odyssey Orbit Map), not just "Settlement"
+				var mapParent = Find.World.worldObjects.MapParentAt(tileId);
+				if (mapParent != null && mapParent.HasMap)
 				{
-					ApplyMapPauseState(settlement.Map, paused);
+					ApplyMapPauseState(mapParent.Map, paused);
 				}
 			}
 

@@ -8,7 +8,7 @@ namespace PauseOtherSettlementsSimulation
     {
         public static int GetLocalTicks(Map map)
         {
-            var settings = LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().GetSettings<PauseOtherSettlementsSimulationSettings>();
+            var settings = PauseOtherSettlementsSimulation.Settings;
             if (!settings.enableLocalTimeSystem) return Find.TickManager.TicksGame;
 
             if (map == null) return Find.TickManager.TicksGame;
@@ -53,7 +53,7 @@ namespace PauseOtherSettlementsSimulation
 
         public static int GetWorldTicksAbs()
         {
-            var settings = LoadedModManager.GetMod<PauseOtherSettlementsSimulation>().GetSettings<PauseOtherSettlementsSimulationSettings>();
+            var settings = PauseOtherSettlementsSimulation.Settings;
             if (!settings.enableLocalTimeSystem) return (Find.TickManager.gameStartAbsTick == 0) ? 0 : Find.TickManager.TicksAbs;
 
             // Find the maximum local time among all player maps

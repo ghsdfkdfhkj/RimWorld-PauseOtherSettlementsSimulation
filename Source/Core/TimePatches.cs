@@ -59,6 +59,9 @@ namespace PauseOtherSettlementsSimulation.Patches
         [HarmonyPrefix]
         public static void Prefix(int __0, ref int __1)
         {
+            // Respect the setting!
+            if (!PauseOtherSettlementsSimulation.Settings.enableLocalTimeSystem) return;
+
             int tile = __0;
             ref int absTick = ref __1;
 

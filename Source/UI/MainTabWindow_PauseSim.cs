@@ -32,43 +32,12 @@ namespace PauseOtherSettlementsSimulation
             // Use direct query as requested to ensure all map parents (including space, camps) are captured.
             // Logic mirrors "currentPlayerMapParents" but keeps as list to avoid dictionary key collisions on Tile -1.
             var currentPlayerMapParents = Find.World.worldObjects.AllWorldObjects.OfType<MapParent>()
-                .Where(mp => mp.Faction == Faction.OfPlayer && mp.HasMap)
+                .Where(mp => mp.HasMap && (mp.Faction == Faction.OfPlayer || (mp.Map != null && mp.Map.mapPawns.AnyColonistSpawned)))
                 .ToList();
 
             var settings = PauseOtherSettlementsSimulation.Settings;
 			
-            var anomalyMapsByParent = new Dictionary<int, List<Map>>();
-            foreach (var map in Find.Maps)
-            {
-                // 기본: PocketMapParent → sourceMap의 정착지 묶기
-                if (map.Parent is PocketMapParent pocketMapParent)
-                {
-                    Map sourceMap = pocketMapParent.sourceMap;
-                    Settlement parentSettlement = sourceMap?.Parent as Settlement;
-                    if (parentSettlement != null && parentSettlement.Faction == Faction.OfPlayer)
-                    {
-                        int parentTileId = parentSettlement.Tile;
-                        if (!anomalyMapsByParent.ContainsKey(parentTileId))
-                        {
-                            anomalyMapsByParent[parentTileId] = new List<Map>();
-                        }
-                        anomalyMapsByParent[parentTileId].Add(map);
-                        continue;
-                    }
-                }
-
-                // 우주/특수 맵 등 PocketMapParent가 아닌데도 플레이어 정착지와 연계되지 않은 맵은
-                // 독립 항목으로 표기하기 위해 가상의 키(-map.uniqueID)를 사용해 최하단에 표시
-                if (!(map.Parent is Settlement) && map.IsPlayerHome)
-                {
-                    int pseudoKey = -map.uniqueID;
-                    if (!anomalyMapsByParent.ContainsKey(pseudoKey))
-                    {
-                        anomalyMapsByParent[pseudoKey] = new List<Map>();
-                    }
-                    anomalyMapsByParent[pseudoKey].Add(map);
-                }
-            }
+            var anomalyMapsByParent = MapGroupingSystem.GetGroupedMaps();
 
             Listing_Standard mainListing = new Listing_Standard();
             mainListing.Begin(inRect);

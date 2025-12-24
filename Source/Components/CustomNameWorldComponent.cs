@@ -113,10 +113,22 @@ namespace PauseOtherSettlementsSimulation
                 // Check if this map should be processed
                 bool isPlayerMap = map.IsPlayerHome || map.Parent.Faction == Faction.OfPlayer;
                 
-                // Allow Pocket Maps that are linked to player settlements, even if the pocket itself (e.g. FleshPit) isn't "Player Faction"
+                // Allow Pocket Maps that are linked to player settlements
                 if (!isPlayerMap && map.Parent is PocketMapParent pmpLinked && pmpLinked.sourceMap != null && pmpLinked.sourceMap.Parent.Faction == Faction.OfPlayer)
                 {
                     isPlayerMap = true;
+                }
+                
+                // [SOS2 Support] Allow temporary maps (like ship battles) if they have player colonists
+                if (!isPlayerMap && map.mapPawns.AnyColonistSpawned)
+                {
+                    isPlayerMap = true;
+                    // Also ensure we track this map in paused states if not already tracked
+                    if (!anomalyMapPausedStates.ContainsKey(map.uniqueID))
+                    {
+                         // Default to "false" (Running) so we don't accidentally freeze a battle
+                         anomalyMapPausedStates[map.uniqueID] = false;
+                    }
                 }
 
                 if (!isPlayerMap) continue;
