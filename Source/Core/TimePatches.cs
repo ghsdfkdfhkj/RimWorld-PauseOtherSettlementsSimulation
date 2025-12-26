@@ -57,13 +57,52 @@ namespace PauseOtherSettlementsSimulation.Patches
     public static class GenTemperature_GetTemperatureFromSeasonAt_Patch
     {
         [HarmonyPrefix]
-        public static void Prefix(int __0, ref int __1)
+        public static void Prefix(ref int __0, object __1)
         {
             // Respect the setting!
             if (!PauseOtherSettlementsSimulation.Settings.enableLocalTimeSystem) return;
 
-            int tile = __0;
-            ref int absTick = ref __1;
+            ref int absTick = ref __0;
+            object tileObj = __1;
+            int tile = -1;
+
+            if (tileObj is int i)
+            {
+                tile = i;
+            }
+            else if (tileObj != null)
+            {
+                // Handle "PlanetTile" or other wrapper structs via reflection
+                // Try "tile" field first, then implicit cast, or just ToString() as last resort?
+                // Assuming it has a field named "tile" or similar.
+                try 
+                {
+                    var field = tileObj.GetType().GetField("tile");
+                    if (field != null && field.FieldType == typeof(int))
+                    {
+                        tile = (int)field.GetValue(tileObj);
+                    }
+                    else
+                    {
+                        // Fallback: Check for any public int field? Or maybe properties?
+                        // This corresponds to RimWorld.Planet.PlanetTile if it exists. 
+                        // If it's the one from some mods, it likely wraps the int.
+                         var prop = tileObj.GetType().GetProperty("Tile");
+                         if (prop != null && prop.PropertyType == typeof(int))
+                         {
+                             tile = (int)prop.GetValue(tileObj);
+                         }
+                    }
+                }
+                catch (Exception)
+                {
+                    // If reflection fails, we can't do anything safe. 
+                    // Just return and let original method run.
+                    return;
+                }
+            }
+
+            if (tile == -1) return;
 
             // If the query is likely for "Current Time" (close to global TicksAbs),
             // and we have a map for this tile, adjust the tick to Local Time.

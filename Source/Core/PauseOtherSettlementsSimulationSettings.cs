@@ -75,7 +75,7 @@ namespace PauseOtherSettlementsSimulation
 
             Scribe_Values.Look(ref autoPauseSettlements, "autoPauseSettlements", true);
             Scribe_Values.Look(ref enablePocketMapSync, "enablePocketMapSync", true);
-            Scribe_Values.Look(ref enableLocalTimeSystem, "enableLocalTimeSystem", true);
+            Scribe_Values.Look(ref enableLocalTimeSystem, "enableLocalTimeSystem", false);
 
             Scribe_Values.Look(ref manualLanguageOverride, "manualLanguageOverride", "Auto");
             
