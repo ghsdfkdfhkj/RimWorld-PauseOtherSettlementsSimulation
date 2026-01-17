@@ -162,7 +162,8 @@ namespace PauseOtherSettlementsSimulation
                         }
                     }
                 }
-                else if (map.Parent is Settlement || map.Parent is MapParent) // Generic catch-all for other player maps (SOS2 ships etc)
+
+                else if (map.Parent is Settlement || (map.Parent is MapParent mp && mp.Faction == Faction.OfPlayer))
                 {
                      if (settings.autoPauseSettlements)
                      {
@@ -185,13 +186,36 @@ namespace PauseOtherSettlementsSimulation
                          }
                      }
                 }
+                // [SOS2 Support / Special Region Support]
+                // If it is NOT a generic Settlement/PlayerMapParent, but 'isPlayerMap' is true (due to colonists),
+                // it falls here. This matches ShouldSimulateMap's "AnyColonistSpawned" or "Other" block, 
+                // which uses ID-based tracking (anomalyMapPausedStates).
+                else
+                {
+                     if (settings.autoPauseSettlements)
+                     {
+                         isTargetForAutoPause = true;
+                         // Treat as "Pocket" regarding storage (ID-based) but without special sync logic for now.
+                         // This effectively redirects "Special Regions" to use ID-based pause state.
+                         
+                         // We trick the logic below to use 'anomalyMapPausedStates' by pretending it matches the "isPocket" variable logic?
+                         // No, we should just ensure 'isPocket' logic is triggered or handle it explicitly.
+                         // The easiest way is to NOT set isPocket=true here (it requires casting), but handle the storage selection below.
+                     }
+                }
 
                 if (isTargetForAutoPause)
                 {
                     bool currentState = false;
-                    bool isPocket = map.Parent is PocketMapParent;
                     
-                    if (isPocket)
+                    // Determine which dictionary to use.
+                    // Priority: PocketMap OR (Not Settlement AND Not PlayerMapParent) -> ID
+                    // Settlement OR PlayerMapParent -> Tile
+                    
+                    bool useAnomalyDict = (map.Parent is PocketMapParent) || 
+                                          (!(map.Parent is Settlement) && !(map.Parent is MapParent mp && mp.Faction == Faction.OfPlayer));
+
+                    if (useAnomalyDict)
                     {
                          if (anomalyMapPausedStates.TryGetValue(map.uniqueID, out bool val)) currentState = val;
                     }
@@ -202,13 +226,12 @@ namespace PauseOtherSettlementsSimulation
 
                     // Only update if different.
                     // If isAway is TRUE, we want to Pause (true).
-                    // If isAway is FALSE, we want to Unpause (false) -> OR do we?
-                    // Auto-Pause usually implies "Auto-Resume" when you return.
+                    // If isAway is FALSE, we want to Unpause (false).
                     // So yes, we enforce 'isAway' as the pause state.
 
                     if (currentState != isAway)
                     {
-                        if (isPocket) anomalyMapPausedStates[map.uniqueID] = isAway;
+                        if (useAnomalyDict) anomalyMapPausedStates[map.uniqueID] = isAway;
                         else settlementPausedStates[map.Tile] = isAway;
 
                         PauseOtherSettlementsSimulation.ApplyMapPauseState(map, isAway);

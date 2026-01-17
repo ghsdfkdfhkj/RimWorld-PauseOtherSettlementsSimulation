@@ -42,7 +42,7 @@ namespace PauseOtherSettlementsSimulation
             Listing_Standard mainListing = new Listing_Standard();
             mainListing.Begin(inRect);
 
-            // --- 제목 라벨 ---
+            // --- Title Label ---
             Rect headerRect = mainListing.GetRect(32f); 
             Text.Font = GameFont.Medium;
             Vector2 titleSize = Text.CalcSize("PauseTab_Title".Translate());
@@ -50,9 +50,34 @@ namespace PauseOtherSettlementsSimulation
             Widgets.Label(titleRect, "PauseTab_Title".Translate());
             Text.Font = GameFont.Small; 
 
-            // --- 설정 버튼 (우측 상단) ---
+            // --- Settings button (top right) ---
             // headerRect는 width가 전체 너비.
             Rect settingsBtnRect = new Rect(headerRect.xMax - 24f, headerRect.y + (headerRect.height - 24f) / 2f, 24f, 24f);
+
+            // [New] Global Time Display
+            if (settings.enableLocalTimeSystem)
+            {
+                int globalDist = LocalTimeManager.GetWorldTicksAbs();
+                // We format it as date/time. Use Tile 0 or similar for generic offset? 
+                // Or simply Year/Quadrum/Day.
+                // GenDate.DateFullStringAt expects ticks+longitudalOffset. 
+                // We'll use 0 longitude (Greenwich style) for standard "Global" time or just the ticks string.
+                // Let's use DateFullStringAt with 0 offset.
+                
+                string globalTimeStr = GenDate.DateFullStringAt(globalDist, Vector2.zero);
+                int hour = GenDate.HourOfDay(globalDist, 0f);
+                string labelText = $"Global Time: {globalTimeStr}, {hour}h";
+
+                // Calculate size
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleRight;
+                Vector2 size = Text.CalcSize(labelText);
+                Rect globalTimeRect = new Rect(settingsBtnRect.x - size.x - 8f, headerRect.y, size.x, headerRect.height);
+                
+                Widgets.Label(globalTimeRect, labelText);
+                Text.Anchor = TextAnchor.UpperLeft;
+                Text.Font = GameFont.Small;
+            }
             
             // Use vanilla 'Info' icon as a safe fallback for Settings/Details since direct path failed
             if (Widgets.ButtonImage(settingsBtnRect, TexButton.OpenStatsReport))
@@ -74,7 +99,7 @@ namespace PauseOtherSettlementsSimulation
             TooltipHandler.TipRegion(settingsBtnRect, "PauseTab_QuickSettingsTooltip".Translate());
             
             mainListing.GapLine();
-            // --- 수동 레이아웃 끝 ---
+            // --- Manual Layout End ---
 
 
             if (!currentPlayerMapParents.Any())
@@ -151,10 +176,10 @@ namespace PauseOtherSettlementsSimulation
                 DrawSettlementRow(settlementListing, settlement, anomalyMaps, settings, currentMapTile);
                 firstElement = false;
             }
-            // 부모 정착지에 묶이지 않은 특수 맵들을 추가로 표시
+            // Draw anomaly maps not bound to any settlement
             foreach (var kv in anomalyMapsByParent.OrderBy(k => k.Key))
             {
-                if (kv.Key >= 0) continue; // 정착지에 속한 키는 위에서 처리됨
+                if (kv.Key >= 0) continue; // Settlement maps are handled above
                 foreach (var map in kv.Value)
                 {
                     Rect subRowRect = settlementListing.GetRect(24f);

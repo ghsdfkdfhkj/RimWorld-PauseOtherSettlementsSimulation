@@ -179,6 +179,7 @@ namespace PauseOtherSettlementsSimulation
                         {
                             if (!worldComp.mapTotalPausedTicks.ContainsKey(map.uniqueID)) worldComp.mapTotalPausedTicks[map.uniqueID] = 0;
                             worldComp.mapTotalPausedTicks[map.uniqueID] += duration;
+                            if (map.uniqueID == 2) Log.Message($"[Debug] ApplyMapPauseState(ID:2) Added duration {duration}, NewTotal: {worldComp.mapTotalPausedTicks[map.uniqueID]}");
                         }
                         worldComp.mapLastPauseTick.Remove(map.uniqueID);
                     }

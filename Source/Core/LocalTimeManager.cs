@@ -22,6 +22,11 @@ namespace PauseOtherSettlementsSimulation
             if (worldComp.mapTotalPausedTicks.TryGetValue(map.uniqueID, out int storedPaused))
             {
                 totalPaused += storedPaused;
+                if (map.uniqueID == 2) Log.Message($"[Debug] GetLocalTicks(ID:2) Found storedPaused: {storedPaused}"); 
+            }
+            else if (map.uniqueID == 2)
+            {
+                Log.Message($"[Debug] GetLocalTicks(ID:2) NO storedPaused found.");
             }
 
             // If currently paused, add the duration of the current pause
@@ -51,7 +56,7 @@ namespace PauseOtherSettlementsSimulation
             }
         }
 
-        public static int GetWorldTicksAbs()
+        public static int GetWorldTicksAbs(Map ignoreMap = null)
         {
             var settings = PauseOtherSettlementsSimulation.Settings;
             if (!settings.enableLocalTimeSystem) return (Find.TickManager.gameStartAbsTick == 0) ? 0 : Find.TickManager.TicksAbs;
@@ -64,6 +69,8 @@ namespace PauseOtherSettlementsSimulation
             for (int i = 0; i < maps.Count; i++)
             {
                 Map m = maps[i];
+                if (m == ignoreMap) continue;
+
                 // Check if this map should contribute to World Time (Max Time)
                 // 1. Is it a Player Home?
                 // 2. Does it belong to Player Faction?
@@ -71,6 +78,13 @@ namespace PauseOtherSettlementsSimulation
                 bool isPlayerMap = m.IsPlayerHome || m.Parent.Faction == Faction.OfPlayer;
 
                 if (!isPlayerMap && m.Parent is PocketMapParent pmp && pmp.sourceMap != null && pmp.sourceMap.Parent.Faction == Faction.OfPlayer)
+                {
+                    isPlayerMap = true;
+                }
+                
+                // [Fix] Also include any map where player colonists are present (Speical Regions, Attacks, etc.)
+                // These maps effectively become the "Active" player map and should contribute to World Time if they are running.
+                if (!isPlayerMap && m.mapPawns.AnyColonistSpawned)
                 {
                     isPlayerMap = true;
                 }

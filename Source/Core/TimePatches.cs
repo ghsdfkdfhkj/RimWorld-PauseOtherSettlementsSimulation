@@ -257,4 +257,45 @@ namespace PauseOtherSettlementsSimulation.Patches
     // [REMOVED] Letter_GetMouseoverText_Patch caused crash because GetMouseoverText is abstract.
     // We would need to patch ChoiceLetter or other concrete classes instead.
     // For now, removing to fix crash.
+    [HarmonyPatch(typeof(Map), nameof(Map.FinalizeInit))]
+    public static class Map_FinalizeInit_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Map __instance)
+        {
+            var settings = PauseOtherSettlementsSimulation.Settings;
+            if (settings == null || !settings.enableLocalTimeSystem) return;
+
+            // Only for player faction maps or maps with colonists
+            if (!__instance.IsPlayerHome && __instance.Parent.Faction != Faction.OfPlayer && !__instance.mapPawns.AnyColonistSpawned) 
+                return;
+
+            var worldComp = Find.World.GetComponent<CustomNameWorldComponent>();
+            if (worldComp == null) return;
+
+            // SAFETY: Do not overwrite existing data. 
+            // If the map triggers FinalizeInit during load, ExposeData should have already populated this.
+            // If it's a new map, it won't be in the dict yet.
+            if (worldComp.mapTotalPausedTicks.ContainsKey(__instance.uniqueID)) return;
+
+            // Calculate the gap betwen Raw Absolute Time and Current Global Time
+            int engineAbs = Find.TickManager.TicksAbs;
+            int globalAbs = LocalTimeManager.GetWorldTicksAbs(__instance); // Exclude THIS map from the calculation
+
+            // If the Engine is ahead of the Global Time (which is expected if things were paused),
+            // we need to set the new map's "TotalPaused" to that difference 
+            // so that (Engine - TotalPaused) = Global Time.
+            int diff = engineAbs - globalAbs;
+
+            if (diff > 0)
+            {
+                worldComp.mapTotalPausedTicks[__instance.uniqueID] = diff;
+                Log.Message($"[PauseOtherSettlements] Synced new map {__instance} (ID:{__instance.uniqueID}) to Global Time. Engine: {engineAbs}, Global(Excl): {globalAbs}, Diff: {diff}");
+            }
+            else
+            {
+                Log.Message($"[PauseOtherSettlements] New map {__instance} sync skipped. Engine: {engineAbs}, Global(Excl): {globalAbs}, Diff: {diff} (<=0)");
+            }
+        }
+    }
 }
