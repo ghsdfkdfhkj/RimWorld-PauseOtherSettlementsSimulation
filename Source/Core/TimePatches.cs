@@ -242,12 +242,28 @@ namespace PauseOtherSettlementsSimulation.Patches
 
         public static int GetLocalTicksForTarget(IIncidentTarget target)
         {
-            Map map = target as Map;
-            if (map == null && target is MapParent mp) map = mp.Map;
-            
-            if (map != null)
+            if (target == null)
             {
-                return LocalTimeManager.GetLocalTicks(map);
+                // Safety: If target is null, fall back to global ticks.
+                return Find.TickManager.TicksGame;
+            }
+
+            try
+            {
+                Map map = target as Map;
+                if (map == null && target is MapParent mp) map = mp.Map;
+                
+                if (map != null)
+                {
+                    return LocalTimeManager.GetLocalTicks(map);
+                }
+            }
+            catch (Exception)
+            {
+                // Log once or just suppress to prevent crash loop?
+                // Suppress is safer for transplier usage, game log will be spammed otherwise if something is fundamentally wrong.
+                // But debugging is needed.
+                // Let's rely on fallback.
             }
             
             return Find.TickManager.TicksGame;

@@ -41,7 +41,7 @@ namespace PauseOtherSettlementsSimulation
 
         // New/Renamed settings
         public bool autoPausePocketMaps = true; // Renamed from pauseAnomalyLayersWhenAway
-        public bool autoPauseSettlements = true; // New (Default: True)
+        public bool autoPauseSettlements = false; // New (Default: false)
         public bool enablePocketMapSync = false; // New: Controls "Shared Presence" logic
         public bool enableLocalTimeSystem = false; // New: Controls Local Time feature & UI
 
@@ -73,7 +73,7 @@ namespace PauseOtherSettlementsSimulation
                 if (!legacyVal) autoPausePocketMaps = false; // Sync if old value was false
             }
 
-            Scribe_Values.Look(ref autoPauseSettlements, "autoPauseSettlements", true);
+            Scribe_Values.Look(ref autoPauseSettlements, "autoPauseSettlements", false);
             Scribe_Values.Look(ref enablePocketMapSync, "enablePocketMapSync", true);
             Scribe_Values.Look(ref enableLocalTimeSystem, "enableLocalTimeSystem", false);
 
