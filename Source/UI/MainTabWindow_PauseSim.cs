@@ -390,7 +390,7 @@ namespace PauseOtherSettlementsSimulation
             
             if (activeMap != null)
             {
-                isPaused = !PauseOtherSettlementsSimulation.ShouldSimulateMap(activeMap);
+                isPaused = !SimulationManager.ShouldSimulateMap(activeMap);
             }
             else
             {
@@ -513,8 +513,8 @@ namespace PauseOtherSettlementsSimulation
             Widgets.Checkbox(checkboxRect.position, ref tempIsPaused);
             if (tempIsPaused != isPaused)
             {
-                if (isParentSettlement) PauseOtherSettlementsSimulation.SetSettlementPaused(tileId, tempIsPaused);
-                else PauseOtherSettlementsSimulation.SetAnomalyMapPaused(map.uniqueID, tempIsPaused);
+                if (isParentSettlement) SimulationManager.SetSettlementPaused(tileId, tempIsPaused);
+                else SimulationManager.SetAnomalyMapPaused(map.uniqueID, tempIsPaused);
             }
             
             string tooltip = isCurrentMap ? "PauseTab_CurrentSettlementEditableTooltip".Translate() : (isParentSettlement ? "PauseTab_SettlementTooltip".Translate() : "PauseTab_PocketMapTooltip".Translate());

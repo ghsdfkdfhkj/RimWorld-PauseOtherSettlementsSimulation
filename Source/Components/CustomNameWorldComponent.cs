@@ -100,10 +100,10 @@ namespace PauseOtherSettlementsSimulation
                 for (int i = 0; i < maps.Count; i++)
                 {
                     Map m = maps[i];
-                    bool shouldSim = PauseOtherSettlementsSimulation.ShouldSimulateMap(m);
+                    bool shouldSim = SimulationManager.ShouldSimulateMap(m);
                     // If shouldSim is true, pause is false.
                     // If shouldSim is false, pause is true.
-                    PauseOtherSettlementsSimulation.ApplyMapPauseState(m, !shouldSim);
+                    SimulationManager.ApplyMapPauseState(m, !shouldSim);
                 }
                 lastCurrentMap = currentMap;
             }
@@ -234,7 +234,7 @@ namespace PauseOtherSettlementsSimulation
                         if (useAnomalyDict) anomalyMapPausedStates[map.uniqueID] = isAway;
                         else settlementPausedStates[map.Tile] = isAway;
 
-                        PauseOtherSettlementsSimulation.ApplyMapPauseState(map, isAway);
+                        SimulationManager.ApplyMapPauseState(map, isAway);
                     }
                 }
             }
@@ -253,7 +253,7 @@ namespace PauseOtherSettlementsSimulation
             // Apply to all maps
             foreach (var map in Find.Maps)
             {
-                PauseOtherSettlementsSimulation.ApplyMapPauseState(map, false);
+                SimulationManager.ApplyMapPauseState(map, false);
             }
         }
     }
